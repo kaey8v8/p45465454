@@ -259,9 +259,12 @@
                     supabaseClient.from('issue_reports').select('*').eq('status', 'pending').order('created_at', { ascending: true })
                 ]);
 
-                if (drinksRes.error) throw drinksRes.error;
-                if (eventsRes.error) throw eventsRes.error;
-                if (reportsRes.error) throw reportsRes.error;
+        // 在這裡加入詳細錯誤偵錯
+                if (drinksRes.error) console.error("Drinks Error:", drinksRes.error);
+                if (eventsRes.error) console.error("Events Error:", eventsRes.error);
+                if (reportsRes.error) console.error("Reports Error:", reportsRes.error);
+        
+                if (drinksRes.error || eventsRes.error || reportsRes.error) throw new Error("資料撈取失敗");
 
                 localDrinks = drinksRes.data || [];
                 localEvents = eventsRes.data || [];
