@@ -184,34 +184,52 @@
 
 
 
-        // 頁面初始化：載入主資料庫 + 已審核通過的零散資料
-
+// 頁面初始化：載入主資料庫 + 自動撈取並合併 approved/ 資料夾內被核准的新資料
         async function initData() {
-
             try {
-
-                // 1. 讀取主資料
-
+                // 1. 讀取主資料庫 (drinks.json)
                 const res = await fetch(`https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/drinks.json`);
-
                 allDrinks = await res.json();
-
                 
-
-                // 2. 讀取 approved/ 資料夾內被管理員核准的零散小檔案
-
-                // (此處邏輯在階段四串接 GitHub API 後，會自動抓取 approved/ 目錄下的新增檔案)
-
+                // 2. 動態讀取 approved/ 資料夾內被管理員核准的零散小檔案
+                try {
+                    // 向 GitHub API 獲取 approved/ 資料夾底下的檔案清單
+                    const approvedRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/approved`);
+                    
+                    if (approvedRes.ok) {
+                        const files = await approvedRes.json();
+                        
+                        // 篩選出所有 .json 結尾的檔案
+                        const jsonFiles = files.filter(f => f.name.endsWith('.json'));
+                        
+                        // 並行讀取所有新檔案的內容
+                        const newItemsPromises = jsonFiles.map(async (file) => {
+                            // 這裡使用 raw.githubusercontent 讀取內容，速度較快且不會有 base64 解碼問題
+                            const fileRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/approved/${file.name}`);
+                            if (fileRes.ok) {
+                                return await fileRes.json();
+                            }
+                            return null;
+                        });
+                        
+                        const newItems = await Promise.all(newItemsPromises);
+                        
+                        // 過濾掉讀取失敗的 null 值，並合併到主陣列
+                        newItems.forEach(item => {
+                            if (item) {
+                                allDrinks.push(item);
+                            }
+                        });
+                    }
+                } catch (apiErr) {
+                    console.log("尚無審核通過的新增資料，或讀取失敗：", apiErr);
+                }
                 
-
+                // 3. 渲染最終合併後的結果
                 renderResults(allDrinks);
-
             } catch (e) {
-
                 document.getElementById('resultsList').innerHTML = `<p class="text-xs text-red-500 text-center">資料載入失敗，請重新整理</p>`;
-
             }
-
         }
 
 
