@@ -433,22 +433,36 @@
                 `;
             }).join('');
         }
-
+// 渲染邏輯
         function renderPendingList(items) {
             const container = document.getElementById('reportListContainer');
-            container.innerHTML = items.map(item => `
+            
+            // 如果沒有資料，顯示提示
+            if (!items || items.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400">目前無待審核項目</p>';
+                return;
+            }
+        
+            container.innerHTML = items.map(item => {
+                // 除錯用：如果名稱不存在，印出來看看
+                if (!item.name) console.log("Missing name for item:", item);
+                
+                // 優先顯示名稱，如果沒有則嘗試顯示其他識別欄位 (例如 id 或 user_name)
+                const displayName = item.name || `項目 #${item.id}`;
+                
+                return `
                 <div class="p-4 bg-yellow-50 rounded-xl border border-yellow-200 shadow-xs mb-4">
                     <span class="bg-yellow-500 text-white text-[10px] px-2 py-0.5 rounded font-bold">
                         ${item.table_source === 'issue_reports' ? '勘誤回報' : '新增申請'}
                     </span>
-                    <div class="text-sm font-bold mt-2">${item.name || '項目名稱'}</div>
+                    <div class="text-sm font-bold mt-2">${displayName}</div>
                     <div class="text-xs text-gray-600 mt-1">備註: ${item.remark || '無'}</div>
                     <div class="grid grid-cols-2 gap-2 mt-3">
                         <button onclick="handlePending('${item.table_source}', ${item.id}, 'rejected')" class="bg-white border border-gray-300 py-1 rounded text-xs">拒絕</button>
                         <button onclick="handlePending('${item.table_source}', ${item.id}, 'approved')" class="bg-yellow-600 text-white py-1 rounded text-xs">核可</button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
         async function handlePending(tableName, id, action) {
             try {
