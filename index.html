@@ -89,7 +89,7 @@
 
     <!-- 幕後 JavaScript 核心邏輯 -->
     <script>
-        // 🛠️ 填入你的 Supabase 設定
+// 🛠️ 填入你的 Supabase 設定
         const SUPABASE_URL = "https://akxaulhkzlckkaxdthxo.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_LP-Jf6ygyLe4rKNVeqS83A_E5jmMzw0";
 
@@ -97,13 +97,14 @@
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let allDrinks = [];
 
-        // 頁面初始化：直接從 Supabase 讀取已核准的飲料資料庫 (drinks 表)
+        // 頁面初始化：從 drink_submissions 讀取已核准 (status = 'approved') 的飲料資料
         async function initData() {
             try {
-                // 從 drinks 資料表抓取所有審核通過的飲料
+                // 修正：向正確的雙表架構 drink_submissions 撈取 status 等於 approved 的資料
                 const { data, error } = await supabase
-                    .from('drinks')
+                    .from('drink_submissions')
                     .select('*')
+                    .eq('status', 'approved')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -154,7 +155,7 @@
             document.getElementById('tabEvent').className = !isDrink ? "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600" : "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400";
         }
 
-        // 當使用者提交表單時，依據類別直接寫入 Supabase 對應的待審核資料表
+        // 當使用者提交表單時，寫入對應的資料表，並預設 status 為 'pending'
         async function handleFormSubmit(event, type) {
             event.preventDefault();
             const formData = new FormData(event.target);
@@ -170,9 +171,9 @@
                 let error;
 
                 if (type === 'drink') {
-                    // 飲料回報：轉型價格並寫入 pending_drinks 表
+                    // 修正：改寫入 drink_submissions 表，且資料庫會自動把 status 代入 'pending'
                     const { error: drinkError } = await supabase
-                        .from('pending_drinks')
+                        .from('drink_submissions')
                         .insert([{
                             name: dataObj.name,
                             price: parseInt(dataObj.price, 10),
@@ -180,9 +181,9 @@
                         }]);
                     error = drinkError;
                 } else {
-                    // 活動回報：寫入 pending_events 表
+                    // 修正：改寫入 event_submissions 表，且資料庫會自動把 status 代入 'pending'
                     const { error: eventError } = await supabase
-                        .from('pending_events')
+                        .from('event_submissions')
                         .insert([{
                             brand: dataObj.brand,
                             url: dataObj.url,
