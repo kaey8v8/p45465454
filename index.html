@@ -1,4 +1,298 @@
-// 當使用者提交表單時，觸發後端工作流進行寫入
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>7-11 飲料抽抽樂適用商品查詢</title>
+
+    <!-- 使用 Tailwind CSS 快速美化手機排版 -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="bg-gray-50 text-gray-800 min-h-screen pb-12">
+
+
+
+    <!-- 導覽列與後台入口 -->
+
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+
+        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+
+            <h1 class="text-lg font-bold text-green-600">7-11 飲料抽抽樂情報站</h1>
+
+            <a href="admin.html" class="text-xs text-gray-400 border border-gray-200 px-2 py-1 rounded hover:bg-gray-50">管理登入</a>
+
+        </div>
+
+    </header>
+
+
+
+    <main class="max-w-md mx-auto px-4 mt-6 space-y-6">
+
+        
+
+        <!-- 區塊一：快速搜尋列 -->
+
+        <section class="bg-white p-4 rounded-xl shadow-sm space-y-3">
+
+            <h2 class="font-semibold text-gray-700">🔍 適用商品快速查詢</h2>
+
+            <input type="text" id="searchInput" placeholder="輸入飲料名稱或價格，例如：星巴克..." 
+
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+
+            
+
+            <!-- 搜尋結果展示區 -->
+
+            <div id="resultsList" class="space-y-2 max-h-96 overflow-y-auto pt-2">
+
+                <!-- 載入中提示 -->
+
+                <p class="text-sm text-gray-400 text-center py-4">資料同步中...</p>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- 區塊二：熱心回報表單 -->
+
+        <section class="bg-white p-4 rounded-xl shadow-sm space-y-4">
+
+            <h2 class="font-semibold text-gray-700">✍️ 發現漏網之魚？歡迎回報！</h2>
+
+            
+
+            <div class="flex space-x-2 border-b border-gray-200 pb-2">
+
+                <button id="tabDrink" onclick="switchForm('drink')" class="flex-1 text-center pb-2 text-sm font-medium border-b-2 border-green-500 text-green-600">回報飲料</button>
+
+                <button id="tabEvent" onclick="switchForm('event')" class="flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400">回報抽獎活動</button>
+
+            </div>
+
+
+
+            <!-- 飲料表單 -->
+
+            <form id="drinkForm" onsubmit="handleFormSubmit(event, 'drink')" class="space-y-3">
+
+                <div>
+
+                    <label class="block text-xs text-gray-500 mb-1">飲料品項名稱 *</label>
+
+                    <input type="text" name="name" required placeholder="例如：純在芒果甘露" class="w-full p-2 border border-gray-200 rounded text-sm">
+
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+
+                    <div>
+
+                        <label class="block text-xs text-gray-500 mb-1">單瓶價格 *</label>
+
+                        <input type="number" name="price" required placeholder="65" class="w-full p-2 border border-gray-200 rounded text-sm">
+
+                    </div>
+
+                    <div>
+
+                        <label class="block text-xs text-gray-500 mb-1">備註 (選填)</label>
+
+                        <input type="text" name="remark" placeholder="例如：現正買一送一" class="w-full p-2 border border-gray-200 rounded text-sm">
+
+                    </div>
+
+                </div>
+
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg transition">提交審核</button>
+
+            </form>
+
+
+
+            <!-- 活動表單 (預設隱藏) -->
+
+            <form id="eventForm" onsubmit="handleFormSubmit(event, 'event')" class="space-y-3 hidden">
+
+                <div>
+
+                    <label class="block text-xs text-gray-500 mb-1">品牌/活動名稱 *</label>
+
+                    <input type="text" name="brand" required placeholder="例如：可口可樂-無糖" class="w-full p-2 border border-gray-200 rounded text-sm">
+
+                </div>
+
+                <div>
+
+                    <label class="block text-xs text-gray-500 mb-1">活動登錄網址 *</label>
+
+                    <input type="url" name="url" required placeholder="https://..." class="w-full p-2 border border-gray-200 rounded text-sm">
+
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+
+                    <div>
+
+                        <label class="block text-xs text-gray-500 mb-1">截止日期</label>
+
+                        <input type="text" name="end_date" placeholder="2026/09/02" class="w-full p-2 border border-gray-200 rounded text-sm">
+
+                    </div>
+
+                    <div>
+
+                        <label class="block text-xs text-gray-500 mb-1">活動細節備註</label>
+
+                        <input type="text" name="detail" placeholder="例如：任兩瓶登發票" class="w-full p-2 border border-gray-200 rounded text-sm">
+
+                    </div>
+
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg transition">提交審核</button>
+
+            </form>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- 幕後 JavaScript 核心邏輯 -->
+
+    <script>
+
+        let allDrinks = [];
+
+        const GITHUB_OWNER = "kaey8v8"; // 👈 請把這裡改成你的 GitHub 帳號
+
+        const GITHUB_REPO = "p45465454";   // 👈 請把這裡改成你的倉庫名稱
+
+
+
+        // 頁面初始化：載入主資料庫 + 已審核通過的零散資料
+
+        async function initData() {
+
+            try {
+
+                // 1. 讀取主資料
+
+                const res = await fetch(`https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/drinks.json`);
+
+                allDrinks = await res.json();
+
+                
+
+                // 2. 讀取 approved/ 資料夾內被管理員核准的零散小檔案
+
+                // (此處邏輯在階段四串接 GitHub API 後，會自動抓取 approved/ 目錄下的新增檔案)
+
+                
+
+                renderResults(allDrinks);
+
+            } catch (e) {
+
+                document.getElementById('resultsList').innerHTML = `<p class="text-xs text-red-500 text-center">資料載入失敗，請重新整理</p>`;
+
+            }
+
+        }
+
+
+
+        // 渲染查詢清單
+
+        function renderResults(data) {
+
+            const list = document.getElementById('resultsList');
+
+            if (data.length === 0) {
+
+                list.innerHTML = `<p class="text-sm text-gray-400 text-center py-4">查無此商品，歡迎在下方回報！</p>`;
+
+                return;
+
+            }
+
+            list.innerHTML = data.map(item => `
+
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+
+                    <div>
+
+                        <div class="font-medium text-sm text-gray-800">${item.name}</div>
+
+                        ${item.remark ? `<div class="text-xs text-gray-400">${item.remark}</div>` : ''}
+
+                    </div>
+
+                    <div class="text-green-600 font-bold text-sm">${item.price} 元</div>
+
+                </div>
+
+            `).join('');
+
+        }
+
+
+
+        // 搜尋監聽
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+
+            const keyword = e.target.value.toLowerCase().trim();
+
+            const filtered = allDrinks.filter(item => 
+
+                item.name.toLowerCase().includes(keyword) || 
+
+                item.price.toString().includes(keyword)
+
+            );
+
+            renderResults(filtered);
+
+        });
+
+
+
+        // 切換飲料/活動表單的分流 UI
+
+        function switchForm(type) {
+
+            const isDrink = type === 'drink';
+
+            document.getElementById('drinkForm').classList.toggle('hidden', !isDrink);
+
+            document.getElementById('eventForm').classList.toggle('hidden', isDrink);
+
+            
+
+            document.getElementById('tabDrink').className = isDrink ? "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-green-500 text-green-600" : "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400";
+
+            document.getElementById('tabEvent').className = !isDrink ? "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600" : "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400";
+
+        }
+
+
+
+        // 當使用者提交表單時，觸發後端工作流進行寫入
         async function handleFormSubmit(event, type) {
             event.preventDefault();
             const formData = new FormData(event.target);
@@ -51,3 +345,14 @@
                 submitBtn.disabled = false;
             }
         }
+
+
+
+        window.onload = initData;
+
+    </script>
+
+</body>
+
+</html> 
+
