@@ -89,25 +89,26 @@
 
     <!-- 幕後 JavaScript 核心邏輯 -->
     <script>
-// 🛠️ 填入你的 Supabase 設定
+        // 🛠️ 填入你的 Supabase 設定
         const SUPABASE_URL = "https://akxaulhkzlckkaxdthxo.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_LP-Jf6ygyLe4rKNVeqS83A_E5jmMzw0";
-
-        // 初始化 Supabase 客戶端
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // 修正：將變數名稱改為 supabaseClient，避免衝突
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let allDrinks = [];
-
+        
         // 頁面初始化：從 drink_submissions 讀取已核准 (status = 'approved') 的飲料資料
         async function initData() {
             try {
-                const { data, error } = await supabase
+                //底下的 supabase 也要同步改成 supabaseClient
+                const { data, error } = await supabaseClient
                     .from('drink_submissions')
                     .select('*')
                     .eq('status', 'approved')
                     .order('created_at', { ascending: false });
-
+        
                 if (error) throw error;
-
+        
                 allDrinks = data || [];
                 renderResults(allDrinks);
             } catch (e) {
