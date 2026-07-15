@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理員審核後台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen pb-12">
+
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-lg font-bold text-gray-700">⚙️ 抽抽樂情報審核後台</h1>
+            <a href="index.html" class="text-xs text-blue-500 border border-blue-200 px-2 py-1 rounded hover:bg-blue-50">返回首頁</a>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 mt-6 space-y-6">
+        
+        <!-- 登入區塊 -->
+        <section id="loginSection" class="bg-white p-6 rounded-xl shadow-sm space-y-4">
+            <h2 class="font-semibold text-gray-700 text-center text-base">🔑 管理員認證</h2>
+            <p class="text-xs text-gray-400 text-center">請輸入由專案擁有者提供的管理密碼</p>
+            <input type="password" id="adminToken" placeholder="請輸入審核密碼 (GitHub Token)..." 
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <button onclick="loadPendingList()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg transition">
+                登入並載入待審清單
+            </button>
+        </section>
+
+        <!-- 審核工作區 (預設隱藏) -->
+        <section id="workSection" class="bg-white p-4 rounded-xl shadow-sm space-y-4 hidden">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h2 class="font-semibold text-gray-700">📥 待審核提案清單</h2>
+                <span id="pendingCount" class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+            </div>
+            
+            <!-- 待審列表展示區 -->
+            <div id="pendingList" class="space-y-3">
+                <p class="text-sm text-gray-400 text-center py-4">請先登入...</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const GITHUB_OWNER = "kaey8v8"; // 👈 請改為你的 GitHub 帳號
+        const GITHUB_REPO = "p45465454";   // 👈 請改為你的倉庫名稱
+        let token = "";
+
+        // 登入並向 GitHub 抓取 pending/ 資料夾內的所有檔案目錄
+        async function loadPendingList() {
+            token = document.getElementById('adminToken').value.trim();
+            if (!token) {
+                alert("請輸入密碼！");
+                return;
+            }
+
+            const listContainer = document.getElementById('pendingList');
+            listContainer.innerHTML = `<p class="text-sm text-gray-400 text-center py-4">正在從資料庫撈取待審資料...</p>`;
+
+            try {
+                // 利用 API 讀取 pending 內容，並附帶管理員輸入的 token 作為憑證
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/pending`, {
+                    headers: { "Authorization": `token ${token}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    alert("密碼錯誤或權限失效，請重新確認！");
+                    return;
+                }
+
+                const files = await response.json();
+                
+                // 過濾掉防空資料夾用的 .gitkeep 檔案
+                const pendingFiles = files.filter(f => f.name !== '.gitkeep');
+                
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('workSection').classList.remove('hidden');
+                document.getElementById('pendingCount').innerText = pendingFiles.length;
+
+                if (pendingFiles.length === 0) {
+                    listContainer.innerHTML = `<p class="text-sm text-green-600 text-center py-6 font-medium">🎉 目前沒有任何待審核提案，大家都休息吧！</p>`;
+                    return;
+                }
+
+                // 輪詢讀取每個獨立 JSON 的檔案內容
+                listContainer.innerHTML = "";
+                for (const file of pendingFiles) {
+                    const fileRes = await fetch(file.download_url);
+                    const rawData = await fileRes.json();
+                    renderPendingCard(file.name, file.sha, rawData);
+                }
+
+            } catch (e) {
+                listContainer.innerHTML = `<p class="text-xs text-red-500 text-center">載入失敗，可能密碼無效或專案設定有誤。</p>`;
+            }
+        }
+
+        // 把每筆獨立的提案做成卡片 UI
+        function renderPendingCard(fileName, fileSha, data) {
+            const container = document.getElementById('pendingList');
+            const card = document.createElement('div');
+            card.className = "p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3 shadow-xs";
+            
+            // 判斷是飲料還是活動，給予不同的外觀標籤
+            const isDrink = fileName.startsWith('drink_');
+            const badge = isDrink 
+                ? `<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded font-medium">飲料回報</span>`
+                : `<span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded font-medium">活動回報</span>`;
+
+            // 動態組裝卡片內文
+            let contentHtml = "";
+            if (isDrink) {
+                contentHtml = `
+                    <div class="text-sm"><strong class="text-gray-500">品項：</strong><span class="font-bold text-gray-800">${data.name}</span></div>
+                    <div class="text-sm"><strong class="text-gray-500">價格：</strong><span class="text-green-600 font-bold">${data.price} 元</span></div>
+                    <div class="text-sm"><strong class="text-gray-500">備註：</strong><span class="text-gray-600">${data.remark || '無'}</span></div>
+                `;
+            } else {
+                contentHtml = `
+                    <div class="text-sm"><strong class="text-gray-500">品牌：</strong><span class="font-bold text-gray-800">${data.brand}</span></div>
+                    <div class="text-sm"><strong class="text-gray-500">網址：</strong><a href="${data.url}" target="_blank" class="text-blue-500 underline text-xs break-all">${data.url}</a></div>
+                    <div class="text-sm"><strong class="text-gray-500">截止：</strong><span class="text-gray-600">${data.end_date || '未填'}</span></div>
+                    <div class="text-sm"><strong class="text-gray-500">細節：</strong><span class="text-gray-600">${data.detail || '無'}</span></div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="flex justify-between items-center border-b pb-1.5">${badge}</div>
+                <div class="space-y-1 py-1">${contentHtml}</div>
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button onclick="reviewAction('${fileName}', '${fileSha}', 'reject')" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium py-2 rounded-lg transition border border-red-200">
+                        ❌ 拒絕/刪除
+                    </button>
+                    <button onclick="reviewAction('${fileName}', '${fileSha}', 'approve')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 rounded-lg transition shadow-xs">
+                        ✅ 同意上架
+                    </button>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+
+        // 核心審核動作：透過 API 直接對 GitHub 資料夾進行移動或刪除
+        async function reviewAction(fileName, fileSha, action) {
+            if (!confirm(`確定要${action === 'approve' ? '同意上架' : '拒絕並刪除'}這筆資料嗎？`)) return;
+
+            try {
+                // 1. 如果是【同意】，先將檔案複製/寫入到 approved/ 資料夾
+                if (action === 'approve') {
+                    // 先抓取該 pending 檔案的內容
+                    const sourceRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/pending/${fileName}`, {
+                        headers: { "Authorization": `token ${token}` }
+                    });
+                    const sourceData = await sourceRes.json();
+
+                    // 寫入到 approved/ 資料夾中
+                    await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/approved/${fileName}`, {
+                        method: "PUT",
+                        headers: {
+                            "Authorization": `token ${token}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            message: `管理員審核通過上架: ${fileName}`,
+                            content: sourceData.content // 直接延用原 Base64 加密內容
+                        })
+                    });
+                }
+
+                // 2. 不論是【同意】還是【拒絕】，最後都要把 pending/ 裡的暫存檔刪除
+                await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/pending/${fileName}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `token ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: `審核程序移除暫存檔: ${fileName}`,
+                        sha: fileSha
+                    })
+                });
+
+                alert("審核操作成功！");
+                loadPendingList(); // 重新整理待審列表
+
+            } catch (e) {
+                alert("審核操作失敗，請檢查網路或密碼權限。");
+            }
+        }
+    </script>
+</body>
+</html>
