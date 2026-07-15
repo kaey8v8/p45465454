@@ -249,28 +249,34 @@
         // 核心：刷新整頁所有資料
         async function refreshAllData() {
             try {
-                // 撈取已核可的（用於現有清單）以及待審核的（用於新增請求）
-                const [drinksRes, eventsRes] = await Promise.all([
-                    supabaseClient.from('drink_submissions').select('*').order('id', { ascending: false }),
-                    supabaseClient.from('event_submissions').select('*').order('id', { ascending: false })
+                // 1. 撈取所有必要的資料
+                const [drinksRes, eventsRes, reportsRes] = await Promise.all([
+                    supabaseClient.from('drink_submissions').select('*'),
+                    supabaseClient.from('event_submissions').select('*'),
+                    supabaseClient.from('issue_reports').select('*') // 這是原本的勘誤表
                 ]);
         
                 if (drinksRes.error) throw drinksRes.error;
                 if (eventsRes.error) throw eventsRes.error;
+                if (reportsRes.error) throw reportsRes.error;
         
-                // 分類資料
-                const allDrinks = drinksRes.data || [];
-                const allEvents = eventsRes.data || [];
+                // 2. 處理資料：注入 table_source 以便後續操作
+                const drinks = (drinksRes.data || []).map(d => ({ ...d, table_source: 'drink_submissions' }));
+                const events = (eventsRes.data || []).map(e => ({ ...e, table_source: 'event_submissions' }));
+                const reports = (reportsRes.data || []).map(r => ({ ...r, table_source: 'issue_reports' }));
         
-                localDrinks = allDrinks.filter(d => d.status === 'approved');
-                localEvents = allEvents.filter(e => e.status === 'approved');
+                // 3. 分類顯示
+                localDrinks = drinks.filter(d => d.status === 'approved');
+                localEvents = events.filter(e => e.status === 'approved');
                 
-                // 待審核清單 (無論是新增還是修改，只要 status 為 pending 都撈出來)
+                // 合併所有待審核的項目 (包含新增申請 與 勘誤回報)
                 const pendingItems = [
-                    ...allDrinks.filter(d => d.status === 'pending'),
-                    ...allEvents.filter(e => e.status === 'pending')
+                    ...drinks.filter(d => d.status === 'pending'),
+                    ...events.filter(e => e.status === 'pending'),
+                    ...reports.filter(r => r.status === 'pending')
                 ];
         
+                // 4. 更新 UI
                 document.getElementById('countActiveDrinks').innerText = localDrinks.length;
                 document.getElementById('countActiveEvents').innerText = localEvents.length;
                 document.getElementById('pendingCount').innerText = pendingItems.length;
@@ -432,12 +438,14 @@
             const container = document.getElementById('reportListContainer');
             container.innerHTML = items.map(item => `
                 <div class="p-4 bg-yellow-50 rounded-xl border border-yellow-200 shadow-xs mb-4">
-                    <span class="bg-yellow-500 text-white text-[10px] px-2 py-0.5 rounded font-bold">待審核</span>
-                    <div class="text-sm font-bold mt-2">${item.name}</div>
-                    <div class="text-xs text-gray-600">價格: ${item.price} | 備註: ${item.remark || '無'}</div>
+                    <span class="bg-yellow-500 text-white text-[10px] px-2 py-0.5 rounded font-bold">
+                        ${item.table_source === 'issue_reports' ? '勘誤回報' : '新增申請'}
+                    </span>
+                    <div class="text-sm font-bold mt-2">${item.name || '項目名稱'}</div>
+                    <div class="text-xs text-gray-600 mt-1">備註: ${item.remark || '無'}</div>
                     <div class="grid grid-cols-2 gap-2 mt-3">
-                        <button onclick="handlePending('${item.table_type}', ${item.id}, 'rejected')" class="bg-white border border-gray-300 py-1 rounded text-xs">拒絕</button>
-                        <button onclick="handlePending('${item.table_type}', ${item.id}, 'approved')" class="bg-yellow-600 text-white py-1 rounded text-xs">核可</button>
+                        <button onclick="handlePending('${item.table_source}', ${item.id}, 'rejected')" class="bg-white border border-gray-300 py-1 rounded text-xs">拒絕</button>
+                        <button onclick="handlePending('${item.table_source}', ${item.id}, 'approved')" class="bg-yellow-600 text-white py-1 rounded text-xs">核可</button>
                     </div>
                 </div>
             `).join('');
