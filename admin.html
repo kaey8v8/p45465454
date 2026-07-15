@@ -269,21 +269,19 @@
                 localEvents = eventsRes.data || [];
                 localReports = reportsRes.data || [];
     
+        // 更新 UI 數量
                 document.getElementById('countActiveDrinks').innerText = localDrinks.length;
                 document.getElementById('countActiveEvents').innerText = localEvents.length;
                 document.getElementById('pendingCount').innerText = localReports.length;
-                
-                if (drinksRes.data) localDrinks = drinksRes.data;
-                if (eventsRes.data) localEvents = eventsRes.data;
-                if (reportsRes.data) localReports = reportsRes.data;
+                        
+
                 // 重新呼叫渲染函式
                 renderActiveLists();
                 renderReportsList();
-                renderReports();
     
             } catch (e) {
-                console.error(e);
-                alert("撈取資料時出錯，請檢查權限設定！");
+                console.error("Data Refresh Error:", e);
+                alert("資料更新失敗：" + e.message);
             }
         }
     
