@@ -350,10 +350,12 @@
         
         // 刪除函式
         async function deleteItem(type, id, name) {
+            console.log("嘗試刪除:", { type, id, name }); // 檢查這裡有沒有輸出
             if (!confirm(`確定要刪除「${name}」嗎？`)) return;
         
             const tableName = type === 'drink' ? 'drink_submissions' : 'event_submissions';
             
+            try {
             // 1. 執行刪除 (務必加上 await)
             const { error } = await supabaseClient
                 .from(tableName)
@@ -367,9 +369,12 @@
                 console.log("刪除成功，準備更新介面");
                 
                 // 2. 刪除成功後，立即重新抓取最新資料
-                await refreshAllData(); 
+                await refreshAllData();
             }
+        } catch (e) {
+            console.error("執行刪除函式時發生例外:", e);
         }
+    }
         
         // 渲染右側使用者勘誤回報
         function renderReportsList() {
