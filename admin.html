@@ -249,33 +249,40 @@
         // 核心：刷新整頁所有資料
         async function refreshAllData() {
             try {
-                const [drinksRes, eventsRes, reportsRes] = await Promise.all([
-                    supabaseClient.from('drink_submissions').select('*').eq('status', 'approved').order('id', { ascending: false }),
-                    supabaseClient.from('event_submissions').select('*').eq('status', 'approved').order('id', { ascending: false }),
-                    supabaseClient.from('issue_reports').select('*').eq('status', 'pending').order('created_at', { ascending: true })
+                // 撈取已核可的（用於現有清單）以及待審核的（用於新增請求）
+                const [drinksRes, eventsRes] = await Promise.all([
+                    supabaseClient.from('drink_submissions').select('*').order('id', { ascending: false }),
+                    supabaseClient.from('event_submissions').select('*').order('id', { ascending: false })
                 ]);
-
+        
                 if (drinksRes.error) throw drinksRes.error;
                 if (eventsRes.error) throw eventsRes.error;
-                if (reportsRes.error) throw reportsRes.error;
-
-                localDrinks = drinksRes.data || [];
-                localEvents = eventsRes.data || [];
-                localReports = reportsRes.data || [];
-
+        
+                // 分類資料
+                const allDrinks = drinksRes.data || [];
+                const allEvents = eventsRes.data || [];
+        
+                localDrinks = allDrinks.filter(d => d.status === 'approved');
+                localEvents = allEvents.filter(e => e.status === 'approved');
+                
+                // 待審核清單 (無論是新增還是修改，只要 status 為 pending 都撈出來)
+                const pendingItems = [
+                    ...allDrinks.filter(d => d.status === 'pending'),
+                    ...allEvents.filter(e => e.status === 'pending')
+                ];
+        
                 document.getElementById('countActiveDrinks').innerText = localDrinks.length;
                 document.getElementById('countActiveEvents').innerText = localEvents.length;
-                document.getElementById('pendingCount').innerText = localReports.length;
-
+                document.getElementById('pendingCount').innerText = pendingItems.length;
+        
                 renderActiveLists();
-                renderReportsList();
-
+                renderPendingList(pendingItems); 
+        
             } catch (e) {
                 console.error(e);
-                alert("撈取資料時出錯，請檢查權限設定！");
+                alert("撈取資料時出錯：" + e.message);
             }
         }
-
         // 切換左側頁籤 (飲料 / 活動)
         function switchActiveTab(tab) {
             currentTab = tab;
@@ -421,7 +428,34 @@
             }).join('');
         }
 
-        
+        function renderPendingList(items) {
+            const container = document.getElementById('reportListContainer');
+            container.innerHTML = items.map(item => `
+                <div class="p-4 bg-yellow-50 rounded-xl border border-yellow-200 shadow-xs mb-4">
+                    <span class="bg-yellow-500 text-white text-[10px] px-2 py-0.5 rounded font-bold">待審核</span>
+                    <div class="text-sm font-bold mt-2">${item.name}</div>
+                    <div class="text-xs text-gray-600">價格: ${item.price} | 備註: ${item.remark || '無'}</div>
+                    <div class="grid grid-cols-2 gap-2 mt-3">
+                        <button onclick="handlePending('${item.table_type}', ${item.id}, 'rejected')" class="bg-white border border-gray-300 py-1 rounded text-xs">拒絕</button>
+                        <button onclick="handlePending('${item.table_type}', ${item.id}, 'approved')" class="bg-yellow-600 text-white py-1 rounded text-xs">核可</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        async function handlePending(tableName, id, action) {
+            try {
+                const { error } = await supabaseClient
+                    .from(tableName)
+                    .update({ status: action })
+                    .eq('id', id);
+                
+                if (error) throw error;
+                alert("操作成功！");
+                refreshAllData();
+            } catch (e) {
+                alert("操作失敗：" + e.message);
+            }
+        }
         // ====================刪除項目函式
         async function deleteItem(type, id) {
             if (!confirm("確定要徹底刪除此項目嗎？此操作無法復原。")) return;
