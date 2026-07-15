@@ -24,7 +24,6 @@
             <h2 class="font-semibold text-gray-700 text-center text-base">🔑 管理員認證</h2>
             <p class="text-xs text-gray-400 text-center">請輸入管理員帳號與密碼</p>
             <div class="space-y-2">
-                <!-- 這裡假裝是普通帳號輸入框 -->
                 <input type="text" id="adminUsername" placeholder="管理員帳號..." 
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                 <input type="password" id="adminPassword" placeholder="管理員密碼..." 
@@ -38,7 +37,7 @@
         <!-- 審核工作區 (預設隱藏) -->
         <section id="workSection" class="bg-white p-4 rounded-xl shadow-sm space-y-4 hidden">
             <div class="flex justify-between items-center border-b pb-2">
-                <h2 class="font-semibold text-gray-700">📥 待審核提案清單</h2>
+                <h2 class="font-semibold text-gray-700">📥 待審核提案與回報清單</h2>
                 <div class="flex space-x-2">
                     <button onclick="logout()" class="text-xs text-red-500 border border-red-200 px-2 py-0.5 rounded hover:bg-red-50">登出</button>
                     <span id="pendingCount" class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
@@ -53,7 +52,7 @@
     </main>
 
     <script>
-// 🛠️ 填入你的 Supabase 設定
+        // 🛠️ 填入你的 Supabase 設定
         const YOUR_SUPABASE_URL = "https://akxaulhkzlckkaxdthxo.supabase.co"; 
         const YOUR_SUPABASE_ANON_KEY = "sb_publishable_LP-Jf6ygyLe4rKNVeqS83A_E5jmMzw0";
 
@@ -97,25 +96,28 @@
             document.getElementById('adminPassword').value = "";
         }
 
-        // 載入待審清單 (篩選出 status = 'pending' 的資料)
+        // 載入待審與回報清單
         async function loadPendingList() {
             const listContainer = document.getElementById('pendingList');
             listContainer.innerHTML = `<p class="text-sm text-gray-400 text-center py-4">正在從資料庫撈取待審資料...</p>`;
 
             try {
-                // 修正：向正確的表撈取 status 等於 pending 的資料
-                const [drinksRes, eventsRes] = await Promise.all([
+                // ✨ 修正：新增讀取 issue_reports 勘誤回報資料
+                const [drinksRes, eventsRes, issuesRes] = await Promise.all([
                     supabaseClient.from('drink_submissions').select('*').eq('status', 'pending').order('created_at', { ascending: true }),
-                    supabaseClient.from('event_submissions').select('*').eq('status', 'pending').order('created_at', { ascending: true })
+                    supabaseClient.from('event_submissions').select('*').eq('status', 'pending').order('created_at', { ascending: true }),
+                    supabaseClient.from('issue_reports').select('*').eq('status', 'pending').order('created_at', { ascending: true })
                 ]);
 
                 if (drinksRes.error) throw drinksRes.error;
                 if (eventsRes.error) throw eventsRes.error;
+                if (issuesRes.error) throw issuesRes.error;
 
                 const pendingDrinks = drinksRes.data || [];
                 const pendingEvents = eventsRes.data || [];
+                const pendingIssues = issuesRes.data || [];
 
-                currentPendingCount = pendingDrinks.length + pendingEvents.length;
+                currentPendingCount = pendingDrinks.length + pendingEvents.length + pendingIssues.length;
                 document.getElementById('pendingCount').innerText = currentPendingCount;
 
                 if (currentPendingCount === 0) {
@@ -125,12 +127,19 @@
 
                 listContainer.innerHTML = "";
 
+                // 1. 渲染新增飲料的提案
                 pendingDrinks.forEach(item => {
                     renderPendingCard('drink', item.id, item);
                 });
 
+                // 2. 渲染新增活動的提案
                 pendingEvents.forEach(item => {
                     renderPendingCard('event', item.id, item);
+                });
+
+                // 3. 渲染錯誤回報（勘誤）提案
+                pendingIssues.forEach(item => {
+                    renderPendingCard('issue', item.id, item);
                 });
 
             } catch (e) {
@@ -148,24 +157,58 @@
             card.id = cardId;
             card.className = "p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3 shadow-xs";
             
-            const isDrink = type === 'drink';
-            const badge = isDrink 
-                ? `<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded font-medium">飲料回報</span>`
-                : `<span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded font-medium">活動回報</span>`;
-
+            // 根據類型設定不同的標籤與樣式
+            let badge = "";
             let contentHtml = "";
-            if (isDrink) {
+            let actionButtons = "";
+
+            if (type === 'drink') {
+                badge = `<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded font-medium">🆕 飲料新增提案</span>`;
                 contentHtml = `
                     <div class="text-sm"><strong class="text-gray-500">品項：</strong><span class="font-bold text-gray-800">${data.name}</span></div>
                     <div class="text-sm"><strong class="text-gray-500">價格：</strong><span class="text-green-600 font-bold">${data.price} 元</span></div>
                     <div class="text-sm"><strong class="text-gray-500">備註：</strong><span class="text-gray-600">${data.remark || '無'}</span></div>
                 `;
-            } else {
+                actionButtons = `
+                    <button onclick="reviewAction('drink', ${id}, 'reject', '${cardId}')" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium py-2 rounded-lg transition border border-red-200">
+                        ❌ 拒絕/不通過
+                    </button>
+                    <button onclick="reviewAction('drink', ${id}, 'approve', '${cardId}')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 rounded-lg transition shadow-xs">
+                        ✅ 同意上架
+                    </button>
+                `;
+            } else if (type === 'event') {
+                badge = `<span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded font-medium">🆕 活動新增提案</span>`;
                 contentHtml = `
                     <div class="text-sm"><strong class="text-gray-500">品牌：</strong><span class="font-bold text-gray-800">${data.brand}</span></div>
                     <div class="text-sm"><strong class="text-gray-500">網址：</strong><a href="${data.url}" target="_blank" class="text-blue-500 underline text-xs break-all">${data.url}</a></div>
                     <div class="text-sm"><strong class="text-gray-500">截止：</strong><span class="text-gray-600">${data.end_date || '未填'}</span></div>
                     <div class="text-sm"><strong class="text-gray-500">細節：</strong><span class="text-gray-600">${data.detail || '無'}</span></div>
+                `;
+                actionButtons = `
+                    <button onclick="reviewAction('event', ${id}, 'reject', '${cardId}')" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium py-2 rounded-lg transition border border-red-200">
+                        ❌ 拒絕/不通過
+                    </button>
+                    <button onclick="reviewAction('event', ${id}, 'approve', '${cardId}')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 rounded-lg transition shadow-xs">
+                        ✅ 同意上架
+                    </button>
+                `;
+            } else if (type === 'issue') {
+                // ✨ 針對錯誤回報（勘誤）的專屬 UI 渲染
+                badge = `<span class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded font-medium">🚨 錯誤勘誤回報</span>`;
+                contentHtml = `
+                    <div class="text-xs text-gray-400 mb-1">目標類型：${data.target_type === 'drink' ? '🍹 飲料資料' : '🎉 活動資料'} (ID: ${data.target_id})</div>
+                    <div class="text-sm"><strong class="text-gray-500">回報飲料：</strong><span class="font-bold text-gray-800">${data.drink_name || '未填'}</span></div>
+                    <div class="text-sm"><strong class="text-gray-500">修正價格：</strong><span class="text-amber-600 font-bold">${data.drink_price !== null ? data.drink_price + ' 元' : '未變更'}</span></div>
+                    <div class="text-sm"><strong class="text-gray-500">回報原因/備註：</strong><span class="text-gray-700 bg-amber-50 p-1.5 rounded block text-xs border border-amber-100 mt-1">${data.drink_remark || '無'}</span></div>
+                `;
+                actionButtons = `
+                    <button onclick="reviewAction('issue', ${id}, 'reject', '${cardId}')" class="bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium py-2 rounded-lg transition border border-gray-300">
+                        ⚪ 忽略/維持現狀
+                    </button>
+                    <button onclick="reviewAction('issue', ${id}, 'approve', '${cardId}')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium py-2 rounded-lg transition shadow-xs">
+                        🛠️ 已人工修正/標記已處理
+                    </button>
                 `;
             }
 
@@ -173,23 +216,29 @@
                 <div class="flex justify-between items-center border-b pb-1.5">${badge}</div>
                 <div class="space-y-1 py-1">${contentHtml}</div>
                 <div class="grid grid-cols-2 gap-2 pt-1">
-                    <button onclick="reviewAction('${type}', ${id}, 'reject', '${cardId}')" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium py-2 rounded-lg transition border border-red-200">
-                        ❌ 拒絕/不通過
-                    </button>
-                    <button onclick="reviewAction('${type}', ${id}, 'approve', '${cardId}')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 rounded-lg transition shadow-xs">
-                        ✅ 同意上架
-                    </button>
+                    ${actionButtons}
                 </div>
             `;
             container.appendChild(card);
         }
 
-        // 審核核心動作 (修正：改為更新原表的 status 狀態)
+        // 審核核心動作
         async function reviewAction(type, id, action, cardElementId) {
-            const actionText = action === 'approve' ? '同意上架' : '拒絕';
-            if (!confirm(`確定要${actionText}這筆資料嗎？`)) return;
+            let actionText = "";
+            if (type === 'issue') {
+                actionText = action === 'approve' ? '標記為已處理' : '忽略此回報';
+            } else {
+                actionText = action === 'approve' ? '同意上架' : '拒絕';
+            }
 
-            const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
+            if (!confirm(`確定要${actionText}嗎？`)) return;
+
+            // 根據不同的資料庫表對應
+            let targetTable = "";
+            if (type === 'drink') targetTable = 'drink_submissions';
+            else if (type === 'event') targetTable = 'event_submissions';
+            else if (type === 'issue') targetTable = 'issue_reports';
+
             const nextStatus = action === 'approve' ? 'approved' : 'rejected';
 
             try {
