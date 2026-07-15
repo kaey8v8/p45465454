@@ -42,10 +42,11 @@
         </section>
     </main>
 
-    <script>
+<script>
         const GITHUB_OWNER = "kaey8v8"; // 👈 請改為你的 GitHub 帳號
         const GITHUB_REPO = "p45465454";   // 👈 請改為你的倉庫名稱
         let token = "";
+        let currentPendingCount = 0; // 新增：用來即時記錄與更新待審數量的變數
 
         // 登入並向 GitHub 抓取 pending/ 資料夾內的所有檔案目錄
         async function loadPendingList() {
@@ -76,10 +77,13 @@
                 
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('workSection').classList.remove('hidden');
-                document.getElementById('pendingCount').innerText = pendingFiles.length;
+                
+                // 初始化待審數量
+                currentPendingCount = pendingFiles.length;
+                document.getElementById('pendingCount').innerText = currentPendingCount;
 
                 if (pendingFiles.length === 0) {
-                    listContainer.innerHTML = `<p class="text-sm text-green-600 text-center py-6 font-medium">🎉 目前沒有任何待審核提案，大家都休息吧！</p>`;
+                    showEmptyMessage();
                     return;
                 }
 
@@ -100,6 +104,11 @@
         function renderPendingCard(fileName, fileSha, data) {
             const container = document.getElementById('pendingList');
             const card = document.createElement('div');
+            
+            // ✅ 關鍵改動：給每張卡片一個專屬的 HTML ID，方便等等直接從網頁上移除它
+            // 將檔名中的點和特殊字元去掉，避免 HTML id 格式報錯
+            const cardId = "card_" + fileName.replace(/[^a-zA-Z0-9]/g, "_");
+            card.id = cardId;
             card.className = "p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3 shadow-xs";
             
             // 判斷是飲料還是活動，給予不同的外觀標籤
@@ -125,14 +134,15 @@
                 `;
             }
 
+            // ✅ 關鍵改動：將 cardId 帶入 reviewAction 函數中
             card.innerHTML = `
                 <div class="flex justify-between items-center border-b pb-1.5">${badge}</div>
                 <div class="space-y-1 py-1">${contentHtml}</div>
                 <div class="grid grid-cols-2 gap-2 pt-1">
-                    <button onclick="reviewAction('${fileName}', '${fileSha}', 'reject')" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium py-2 rounded-lg transition border border-red-200">
+                    <button onclick="reviewAction('${fileName}', '${fileSha}', 'reject', '${cardId}')" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium py-2 rounded-lg transition border border-red-200">
                         ❌ 拒絕/刪除
                     </button>
-                    <button onclick="reviewAction('${fileName}', '${fileSha}', 'approve')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 rounded-lg transition shadow-xs">
+                    <button onclick="reviewAction('${fileName}', '${fileSha}', 'approve', '${cardId}')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 rounded-lg transition shadow-xs">
                         ✅ 同意上架
                     </button>
                 </div>
@@ -141,7 +151,7 @@
         }
 
         // 核心審核動作：透過 API 直接對 GitHub 資料夾進行移動或刪除
-        async function reviewAction(fileName, fileSha, action) {
+        async function reviewAction(fileName, fileSha, action, cardElementId) {
             if (!confirm(`確定要${action === 'approve' ? '同意上架' : '拒絕並刪除'}這筆資料嗎？`)) return;
 
             try {
@@ -181,11 +191,31 @@
                 });
 
                 alert("審核操作成功！");
-                loadPendingList(); // 重新整理待審列表
+
+                // ✅ 關鍵修復邏輯：直接在前端把這張卡片 HTML 移除，完全不需等待 GitHub 延遲！
+                const targetCard = document.getElementById(cardElementId);
+                if (targetCard) {
+                    targetCard.remove();
+                }
+
+                // 更新右上角的待審數量
+                currentPendingCount--;
+                document.getElementById('pendingCount').innerText = currentPendingCount;
+
+                // 如果全部審核完了，直接顯示打烊恭喜畫面
+                if (currentPendingCount <= 0) {
+                    showEmptyMessage();
+                }
 
             } catch (e) {
                 alert("審核操作失敗，請檢查網路或密碼權限。");
             }
+        }
+
+        // 顯示無資料的友善畫面
+        function showEmptyMessage() {
+            const listContainer = document.getElementById('pendingList');
+            listContainer.innerHTML = `<p class="text-sm text-green-600 text-center py-6 font-medium">🎉 目前沒有任何待審核提案，大家都休息吧！</p>`;
         }
     </script>
 </body>
