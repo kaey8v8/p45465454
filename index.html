@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>7-11 飲料抽抽樂情報站</title>
-    <!-- 使用 Tailwind CSS 快速美化手機排版 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Supabase 官方 CDN 腳本 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen pb-12">
 
-    <!-- 導覽列與後台入口 -->
     <header class="bg-white shadow-sm sticky top-0 z-10">
         <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-lg font-bold text-green-600">7-11 飲料抽抽樂情報站</h1>
@@ -21,7 +18,6 @@
 
     <main class="max-w-md mx-auto px-4 mt-6 space-y-6">
         
-        <!-- 區塊一：主看板大分頁切換（聯動下方回報區） -->
         <section class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="flex border-b border-gray-100 bg-gray-50/50">
                 <button id="viewTabDrink" onclick="globalSwitch('drink')" class="flex-1 py-3 text-center text-sm font-bold border-b-2 border-green-500 text-green-600 transition">
@@ -33,119 +29,148 @@
             </div>
 
             <div class="p-4 space-y-4">
-                <!-- 搜尋輸入框 -->
-                <input type="text" id="searchInput" placeholder="輸入關鍵字搜尋..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                <div class="flex space-x-2">
+                    <input type="text" id="searchInput" placeholder="輸入關鍵字搜尋..." 
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                    <button onclick="openCreateModal()" id="openCreateBtn" class="bg-green-600 hover:bg-green-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition whitespace-nowrap">
+                        ➕ 新增商品
+                    </button>
+                </div>
                 
-                <!-- 飲料看板內容 -->
                 <div id="drinkViewSection" class="space-y-2 max-h-96 overflow-y-auto">
                     <p class="text-xs text-gray-400 text-center py-4">資料同步中...</p>
                 </div>
 
-                <!-- 活動看板內容 (預設隱藏) -->
                 <div id="eventViewSection" class="space-y-2 max-h-96 overflow-y-auto hidden">
                     <p class="text-xs text-gray-400 text-center py-4">資料同步中...</p>
                 </div>
             </div>
         </section>
+    </main>
 
-        <!-- 區塊二：熱心新增回報表單 -->
-        <section class="bg-white p-4 rounded-xl shadow-sm space-y-4">
-            <h2 id="formSectionTitle" class="font-semibold text-gray-700">✍️ 發現漏網飲料？歡迎新增！</h2>
+    <div id="createModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto relative">
+            <h3 id="createModalTitle" class="text-base font-bold text-gray-800">✍️ 發現漏網飲料？歡迎新增！</h3>
+            <button onclick="closeCreateModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg">✕</button>
 
-            <!-- 飲料新增表單 -->
-            <form id="drinkForm" class="space-y-3">
+            <form id="drinkForm" class="space-y-3 mt-4" onsubmit="submitFormLogic(event, 'drink')">
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">飲料品項名稱 *</label>
-                    <input type="text" name="name" required placeholder="例如：純在芒果甘露" class="w-full p-2 border border-gray-200 rounded text-sm">
+                    <input type="text" name="name" required placeholder="例如：純在芒果甘露" class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">單瓶價格 (上限 $500) *</label>
-                    <input type="number" name="price" max="500" required placeholder="65" class="w-full p-2 border border-gray-200 rounded text-sm">
+                    <input type="number" name="price" max="500" required placeholder="65" class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">常用狀態標籤 (可多選)</label>
-                    <div class="grid grid-cols-2 gap-2 bg-gray-50 p-2.5 rounded border border-gray-100">
-                        <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer"><input type="checkbox" name="drink_tags" value="現正買一送一" class="rounded text-green-600 focus:ring-green-500"> <span>現正買一送一</span></label>
-                        <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer"><input type="checkbox" name="drink_tags" value="袋裝" class="rounded text-green-600 focus:ring-green-500"> <span>袋裝</span></label>
-                        <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer"><input type="checkbox" name="drink_tags" value="不確定有無抽抽樂" class="rounded text-green-600 focus:ring-green-500"> <span>不確定有抽抽樂</span></label>
-                        <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer"><input type="checkbox" name="drink_tags" value="已無在架上看到" class="rounded text-green-600 focus:ring-green-500"> <span>已無在架上看到</span></label>
+                    <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-150 text-xs">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="drink_tags" value="現正買一送一" onchange="syncCreateDrinkTags()" class="rounded text-green-600 focus:ring-green-500">
+                            <span>現正買一送一</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="drink_tags" value="袋裝" onchange="syncCreateDrinkTags()" class="rounded text-green-600 focus:ring-green-500">
+                            <span>袋裝</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="drink_tags" value="不確定有無抽抽樂" onchange="syncCreateDrinkTags()" class="rounded text-green-600 focus:ring-green-500">
+                            <span>不確定有抽抽樂</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="drink_tags" value="已無在架上看到" onchange="syncCreateDrinkTags()" class="rounded text-green-600 focus:ring-green-500">
+                            <span>已無在架上看到</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">已選標籤預覽</label>
+                    <div id="createDrinkTagContainer" class="flex flex-wrap gap-1.5 p-2 bg-blue-50/50 border border-blue-100 rounded-lg min-h-[40px]">
+                        <span class="text-xs text-gray-400 italic">尚未勾選任何標籤...</span>
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">其他備註 (選填)</label>
-                    <input type="text" name="remark" placeholder="例如：店員說特價只到本週日" class="w-full p-2 border border-gray-200 rounded text-sm">
+                    <textarea id="createDrinkRemark" name="remark" rows="2" class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="例如：店員說特價只到本週日" oninput="syncCreateDrinkTags()"></textarea>
                 </div>
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg transition">提交飲料審核</button>
+                <div class="flex space-x-2 pt-2">
+                    <button type="button" onclick="closeCreateModal()" class="w-1/2 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-lg text-sm font-medium">取消</button>
+                    <button type="submit" class="w-1/2 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium transition">提交飲料審核</button>
+                </div>
             </form>
 
-            <!-- 活動新增表單 -->
-            <form id="eventForm" class="space-y-3 hidden">
+            <form id="eventForm" class="space-y-3 mt-4 hidden" onsubmit="submitFormLogic(event, 'event')">
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">品牌/活動名稱 *</label>
-                    <input type="text" name="brand" required placeholder="例如：可口可樂" class="w-full p-2 border border-gray-200 rounded text-sm">
+                    <input type="text" name="brand" required placeholder="例如：可口可樂" class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">活動登錄網址 *</label>
-                    <input type="url" name="url" required placeholder="https://..." class="w-full p-2 border border-gray-200 rounded text-sm">
+                    <input type="url" name="url" required placeholder="https://..." class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">開始日期 (選填)</label>
-                        <input type="text" name="start_date" placeholder="2026/07/16" class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <input type="text" name="start_date" placeholder="2026/07/16" class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">截止日期 (必填) *</label>
-                        <input type="text" name="end_date" required placeholder="2026-09-02" class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <input type="text" name="end_date" required placeholder="2026-09-02" class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">抽獎形式標籤 (可多選)</label>
-                    <div class="grid grid-cols-3 gap-2 bg-gray-50 p-2.5 rounded border border-gray-100 text-[11px]">
-                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="登錄發票" class="rounded text-blue-600 focus:ring-blue-500"> <span>登錄發票</span></label>
-                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="瓶蓋序號" class="rounded text-blue-600 focus:ring-blue-500"> <span>瓶蓋序號</span></label>
-                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="罐底序號" class="rounded text-blue-600 focus:ring-blue-500"> <span>罐底序號</span></label>
-                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="需回函" class="rounded text-blue-600 focus:ring-blue-500"> <span>需回函</span></label>
-                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="需簡訊" class="rounded text-blue-600 focus:ring-blue-500"> <span>需簡訊</span></label>
-                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="立即抽" class="rounded text-blue-600 focus:ring-blue-500"> <span>立即抽</span></label>
+                    <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-150 text-xs">
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="event_tags" value="登錄發票" onchange="syncCreateEventTags()" class="rounded text-blue-600 focus:ring-blue-500"> <span>登錄發票</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="event_tags" value="瓶蓋序號" onchange="syncCreateEventTags()" class="rounded text-blue-600 focus:ring-blue-500"> <span>瓶蓋序號</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="event_tags" value="罐底序號" onchange="syncCreateEventTags()" class="rounded text-blue-600 focus:ring-blue-500"> <span>罐底序號</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="event_tags" value="需回函" onchange="syncCreateEventTags()" class="rounded text-blue-600 focus:ring-blue-500"> <span>需回函</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="event_tags" value="需簡訊" onchange="syncCreateEventTags()" class="rounded text-blue-600 focus:ring-blue-500"> <span>需簡訊</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="event_tags" value="立即抽" onchange="syncCreateEventTags()" class="rounded text-blue-600 focus:ring-blue-500"> <span>立即抽</span></label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">已選標籤預覽</label>
+                    <div id="createEventTagContainer" class="flex flex-wrap gap-1.5 p-2 bg-amber-50/50 border border-amber-100 rounded-lg min-h-[40px]">
+                        <span class="text-xs text-gray-400 italic">尚未勾選任何標籤...</span>
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">活動細節備註 (選填)</label>
-                    <input type="text" name="detail" placeholder="例如：滿額 199 元加碼送周邊" class="w-full p-2 border border-gray-200 rounded text-sm">
+                    <textarea id="createEventDetail" name="detail" rows="2" class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="例如：滿額 199 元加碼送周邊" oninput="syncCreateEventTags()"></textarea>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg transition">提交活動審核</button>
+                <div class="flex space-x-2 pt-2">
+                    <button type="button" onclick="closeCreateModal()" class="w-1/2 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-lg text-sm font-medium">取消</button>
+                    <button type="submit" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition">提交活動審核</button>
+                </div>
             </form>
-        </section>
-    </main>
+        </div>
+    </div>
 
-    <!-- 🚨 結構化錯誤回報專用彈窗 (Modal) -->
     <div id="issueModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto relative">
             <div>
                 <h3 class="font-bold text-gray-800 text-base flex items-center space-x-1">
                     <span>🚨</span> <span id="issueModalTitleText">項目</span> 資訊勘誤回報
                 </h3>
                 <p class="text-xs text-gray-400 mt-1">請修正下方錯誤的欄位，以便管理員進行覆蓋審查。</p>
             </div>
+            <button onclick="closeIssueModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg">✕</button>
             
-            <form id="issueForm" class="space-y-3">
-                <!-- 隱藏控制項 -->
+            <form id="issueForm" class="space-y-3 mt-4">
                 <input type="hidden" id="issueTargetType" name="target_type">
                 <input type="hidden" id="issueTargetId" name="target_id">
 
-                <!-- 容器：動態塞入飲料或活動的專屬修改欄位 -->
                 <div id="issueDynamicFields" class="space-y-3 text-left"></div>
 
                 <div class="flex space-x-2 pt-2">
-                    <button type="button" onclick="closeIssueModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium py-2 rounded-lg transition">取消</button>
-                    <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-2 rounded-lg transition">送出勘誤</button>
+                    <button type="button" onclick="closeIssueModal()" class="w-1/2 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-lg text-sm font-medium">取消</button>
+                    <button type="submit" class="w-1/2 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-medium transition">送出勘誤</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- 幕後 JavaScript 核心邏輯 -->
     <script>
         const SUPABASE_URL = "https://akxaulhkzlckkaxdthxo.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_LP-Jf6ygyLe4rKNVeqS83A_E5jmMzw0";
@@ -242,10 +267,21 @@
             document.getElementById('viewTabDrink').className = isDrink ? "flex-1 py-3 text-center text-sm font-bold border-b-2 border-green-500 text-green-600 transition" : "flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition";
             document.getElementById('viewTabEvent').className = !isDrink ? "flex-1 py-3 text-center text-sm font-bold border-b-2 border-blue-500 text-blue-600 transition" : "flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition";
             
-            // 2. 切換下方新增區
-            document.getElementById('drinkForm').classList.toggle('hidden', !isDrink);
-            document.getElementById('eventForm').classList.toggle('hidden', isDrink);
-            document.getElementById('formSectionTitle').innerText = isDrink ? "✍️ 發現漏網飲料？歡迎新增！" : "✍️ 發現漏網活動？歡迎新增！";
+            // 2. 切換彈窗內的表單顯示與主畫面的按鈕文字/顏色
+            const openCreateBtn = document.getElementById('openCreateBtn');
+            if (isDrink) {
+                document.getElementById('drinkForm').classList.remove('hidden');
+                document.getElementById('eventForm').classList.add('hidden');
+                document.getElementById('createModalTitle').innerText = "✍️ 發現漏網飲料？歡迎新增！";
+                openCreateBtn.innerText = "➕ 新增商品";
+                openCreateBtn.className = "bg-green-600 hover:bg-green-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition whitespace-nowrap";
+            } else {
+                document.getElementById('drinkForm').classList.add('hidden');
+                document.getElementById('eventForm').classList.remove('hidden');
+                document.getElementById('createModalTitle').innerText = "✍️ 發現漏網活動？歡迎新增！";
+                openCreateBtn.innerText = "➕ 新增活動";
+                openCreateBtn.className = "bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition whitespace-nowrap";
+            }
             
             // 清空搜尋條件
             document.getElementById('searchInput').value = "";
@@ -265,16 +301,159 @@
             }
         });
 
-        // 輔助函式：整合 Checkbox 與輸入框文字
-        function compileRemarkWithTags(formElement, checkboxName, textInputName) {
-            const text = formElement.querySelector(`[name="${textInputName}"]`).value.trim();
-            const checkedBoxes = Array.from(formElement.querySelectorAll(`[name="${checkboxName}"]:checked`)).map(cb => cb.value);
-            
-            if (checkedBoxes.length > 0) {
-                const tagsStr = `[${checkedBoxes.join(', ')}]`;
-                return text ? `${tagsStr} ${text}` : tagsStr;
+        // ==================== 🛠️ 彈窗開啟與關閉邏輯 ====================
+        function openCreateModal() {
+            document.getElementById('createModal').classList.remove('hidden');
+            syncCreateDrinkTags();
+            syncCreateEventTags();
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.add('hidden');
+            document.getElementById('drinkForm').reset();
+            document.getElementById('eventForm').reset();
+        }
+
+        // ==================== 🛠️ [新增表單] 標籤視覺化與文字同步邏輯 ====================
+        function removeCreateDrinkTag(tagValue) {
+            const checkbox = document.querySelector(`#drinkForm input[name="drink_tags"][value="${tagValue}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                syncCreateDrinkTags();
             }
-            return text || null;
+        }
+
+        function removeCreateEventTag(tagValue) {
+            const checkbox = document.querySelector(`#eventForm input[name="event_tags"][value="${tagValue}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                syncCreateEventTags();
+            }
+        }
+
+        function syncCreateDrinkTags() {
+            const checkboxes = document.querySelectorAll('#drinkForm input[name="drink_tags"]');
+            const tagContainer = document.getElementById('createDrinkTagContainer');
+            const textInput = document.getElementById('createDrinkRemark');
+            
+            const selectedTags = [];
+            checkboxes.forEach(cb => { if (cb.checked) selectedTags.push(cb.value); });
+
+            if (selectedTags.length === 0) {
+                tagContainer.innerHTML = `<span class="text-xs text-gray-400 italic">尚未勾選任何標籤...</span>`;
+            } else {
+                tagContainer.innerHTML = selectedTags.map(tag => `
+                    <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full border border-blue-200">
+                        ${tag}
+                        <button type="button" onclick="removeCreateDrinkTag('${tag}')" class="hover:text-blue-500 focus:outline-none ml-0.5 text-[10px] font-bold">✕</button>
+                    </span>
+                `).join('');
+            }
+
+            let currentText = textInput.value.trim();
+            let customPart = currentText.includes('|') ? currentText.split('|')[1].trim() : currentText;
+            checkboxes.forEach(cb => { customPart = customPart.replace(cb.value, "").replace(/[\s\[\]]/g, ""); });
+
+            let tagsText = selectedTags.length > 0 ? `[${selectedTags.join(', ')}]` : "";
+            textInput.value = tagsText && customPart ? `${tagsText} | ${customPart}` : (tagsText || customPart);
+        }
+
+        function syncCreateEventTags() {
+            const checkboxes = document.querySelectorAll('#eventForm input[name="event_tags"]');
+            const tagContainer = document.getElementById('createEventTagContainer');
+            const textInput = document.getElementById('createEventDetail');
+
+            const selectedTags = [];
+            checkboxes.forEach(cb => { if (cb.checked) selectedTags.push(cb.value); });
+
+            if (selectedTags.length === 0) {
+                tagContainer.innerHTML = `<span class="text-xs text-gray-400 italic">尚未勾選任何標籤...</span>`;
+            } else {
+                tagContainer.innerHTML = selectedTags.map(tag => `
+                    <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-1 rounded-full border border-amber-200">
+                        ${tag}
+                        <button type="button" onclick="removeCreateEventTag('${tag}')" class="hover:text-amber-500 focus:outline-none ml-0.5 text-[10px] font-bold">✕</button>
+                    </span>
+                `).join('');
+            }
+
+            let currentText = textInput.value.trim();
+            let customPart = currentText.includes('|') ? currentText.split('|')[1].trim() : currentText;
+            checkboxes.forEach(cb => { customPart = customPart.replace(cb.value, "").replace(/[\s\[\]]/g, ""); });
+
+            let tagsText = selectedTags.length > 0 ? `[${selectedTags.join(', ')}]` : "";
+            textInput.value = tagsText && customPart ? `${tagsText} | ${customPart}` : (tagsText || customPart);
+        }
+
+        // ==================== 🛠️ [勘誤表單] 標籤視覺化與文字同步邏輯 ====================
+        function removeIssueDrinkTag(tagValue) {
+            const checkbox = document.querySelector(`#issueForm input[name="issue_drink_tags"][value="${tagValue}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                syncIssueDrinkTags();
+            }
+        }
+
+        function removeIssueEventTag(tagValue) {
+            const checkbox = document.querySelector(`#issueForm input[name="issue_event_tags"][value="${tagValue}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                syncIssueEventTags();
+            }
+        }
+
+        function syncIssueDrinkTags() {
+            const checkboxes = document.querySelectorAll('#issueForm input[name="issue_drink_tags"]');
+            const tagContainer = document.getElementById('issueDrinkTagContainer');
+            const textInput = document.getElementById('issueDrinkRemark');
+            
+            const selectedTags = [];
+            checkboxes.forEach(cb => { if (cb.checked) selectedTags.push(cb.value); });
+
+            if (selectedTags.length === 0) {
+                tagContainer.innerHTML = `<span class="text-xs text-gray-400 italic">尚未勾選任何標籤...</span>`;
+            } else {
+                tagContainer.innerHTML = selectedTags.map(tag => `
+                    <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full border border-blue-200">
+                        ${tag}
+                        <button type="button" onclick="removeIssueDrinkTag('${tag}')" class="hover:text-blue-500 focus:outline-none ml-0.5 text-[10px] font-bold">✕</button>
+                    </span>
+                `).join('');
+            }
+
+            let currentText = textInput.value.trim();
+            let customPart = currentText.includes('|') ? currentText.split('|')[1].trim() : currentText;
+            checkboxes.forEach(cb => { customPart = customPart.replace(cb.value, "").replace(/[\s\[\]]/g, ""); });
+
+            let tagsText = selectedTags.length > 0 ? `[${selectedTags.join(', ')}]` : "";
+            textInput.value = tagsText && customPart ? `${tagsText} | ${customPart}` : (tagsText || customPart);
+        }
+
+        function syncIssueEventTags() {
+            const checkboxes = document.querySelectorAll('#issueForm input[name="issue_event_tags"]');
+            const tagContainer = document.getElementById('issueEventTagContainer');
+            const textInput = document.getElementById('issueEventDetail');
+
+            const selectedTags = [];
+            checkboxes.forEach(cb => { if (cb.checked) selectedTags.push(cb.value); });
+
+            if (selectedTags.length === 0) {
+                tagContainer.innerHTML = `<span class="text-xs text-gray-400 italic">尚未勾選任何標籤...</span>`;
+            } else {
+                tagContainer.innerHTML = selectedTags.map(tag => `
+                    <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-1 rounded-full border border-amber-200">
+                        ${tag}
+                        <button type="button" onclick="removeIssueEventTag('${tag}')" class="hover:text-amber-500 focus:outline-none ml-0.5 text-[10px] font-bold">✕</button>
+                    </span>
+                `).join('');
+            }
+
+            let currentText = textInput.value.trim();
+            let customPart = currentText.includes('|') ? currentText.split('|')[1].trim() : currentText;
+            checkboxes.forEach(cb => { customPart = customPart.replace(cb.value, "").replace(/[\s\[\]]/g, ""); });
+
+            let tagsText = selectedTags.length > 0 ? `[${selectedTags.join(', ')}]` : "";
+            textInput.value = tagsText && customPart ? `${tagsText} | ${customPart}` : (tagsText || customPart);
         }
 
         // 新增提交處理
@@ -290,7 +469,7 @@
                     alert("❌ 安全警告：單瓶飲料價格不可能大於 500 元！");
                     return;
                 }
-                const compiledRemark = compileRemarkWithTags(e.target, 'drink_tags', 'remark');
+                const compiledRemark = document.getElementById('createDrinkRemark').value.trim() || null;
 
                 submitBtn.disabled = true;
                 try {
@@ -299,7 +478,7 @@
                     }]);
                     if (error) throw error;
                     alert("🎉 新增飲料成功！已送往審核。");
-                    e.target.reset();
+                    closeCreateModal();
                 } catch(err) { alert(err.message); } finally { submitBtn.disabled = false; }
 
             } else {
@@ -307,7 +486,7 @@
                 const url = e.target.querySelector('[name="url"]').value;
                 const start_date = normalizeDate(e.target.querySelector('[name="start_date"]').value);
                 const end_date = normalizeDate(e.target.querySelector('[name="end_date"]').value);
-                const compiledDetail = compileRemarkWithTags(e.target, 'event_tags', 'detail');
+                const compiledDetail = document.getElementById('createEventDetail').value.trim() || null;
 
                 submitBtn.disabled = true;
                 try {
@@ -316,7 +495,7 @@
                     }]);
                     if (error) throw error;
                     alert("🎉 新增活動成功！已送往審核。");
-                    e.target.reset();
+                    closeCreateModal();
                 } catch(err) { alert(err.message); } finally { submitBtn.disabled = false; }
             }
         }
@@ -330,70 +509,108 @@
             
             if (type === 'drink') {
                 document.getElementById('issueModalTitleText').innerText = "🥤 飲料";
-                const item = allDrinks.find(d => d.id === id) || { name: '', price: '' };
+                const item = allDrinks.find(d => d.id === id) || { name: '', price: '', remark: '' };
                 
                 fieldsContainer.innerHTML = `
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">修正 品項名稱 *</label>
-                        <input type="text" name="drink_name" value="${item.name.replace(/"/g, '&quot;')}" required class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <input type="text" name="drink_name" value="${item.name.replace(/"/g, '&quot;')}" required class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">修正 單瓶價格 *</label>
-                        <input type="number" name="drink_price" value="${item.price}" max="500" required class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <input type="number" name="drink_price" value="${item.price}" max="500" required class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">修正 常用狀態標籤</label>
-                        <div class="grid grid-cols-2 gap-2 bg-gray-50 p-2 rounded border border-gray-100 text-[11px]">
-                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_drink_tags" value="現正買一送一"> <span>買一送一</span></label>
-                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_drink_tags" value="袋裝"> <span>袋裝</span></label>
-                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_drink_tags" value="不確定有無抽抽樂"> <span>未確認</span></label>
-                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_drink_tags" value="已無在架上看到"> <span>已缺貨</span></label>
+                        <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-150 text-xs">
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_drink_tags" value="現正買一送一" onchange="syncIssueDrinkTags()" class="rounded text-green-600"> <span>買一送一</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_drink_tags" value="袋裝" onchange="syncIssueDrinkTags()" class="rounded text-green-600"> <span>袋裝</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_drink_tags" value="不確定有無抽抽樂" onchange="syncIssueDrinkTags()" class="rounded text-green-600"> <span>未確認</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_drink_tags" value="已無在架上看到" onchange="syncIssueDrinkTags()" class="rounded text-green-600"> <span>已缺貨</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">已選標籤預覽</label>
+                        <div id="issueDrinkTagContainer" class="flex flex-wrap gap-1.5 p-2 bg-blue-50/50 border border-blue-100 rounded-lg min-h-[40px]">
+                            <span class="text-xs text-gray-400 italic">尚未勾選任何標籤...</span>
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">修正 其他備註</label>
-                        <input type="text" name="drink_remark" placeholder="選填修正敘述" class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <textarea id="issueDrinkRemark" name="drink_remark" rows="2" placeholder="選填修正敘述" class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:outline-none" oninput="syncIssueDrinkTags()"></textarea>
                     </div>
                 `;
+                
+                // 預先帶入並勾選原有標籤
+                setTimeout(() => {
+                    if (item.remark) {
+                        const checkboxes = document.querySelectorAll('input[name="issue_drink_tags"]');
+                        checkboxes.forEach(cb => { if (item.remark.includes(cb.value)) cb.checked = true; });
+                        // 分離出純自訂文字部分
+                        let customPart = item.remark.includes('|') ? item.remark.split('|')[1].trim() : item.remark;
+                        checkboxes.forEach(cb => { customPart = customPart.replace(cb.value, "").replace(/[\s\[\]]/g, ""); });
+                        document.getElementById('issueDrinkRemark').value = customPart;
+                    }
+                    syncIssueDrinkTags();
+                }, 50);
+
             } else {
                 document.getElementById('issueModalTitleText').innerText = "🎁 活動";
-                const item = allEvents.find(e => e.id === id) || { brand: '', url: '', start_date: '', end_date: '' };
+                const item = allEvents.find(e => e.id === id) || { brand: '', url: '', start_date: '', end_date: '', detail: '' };
                 
                 fieldsContainer.innerHTML = `
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">修正 品牌/活動名稱 *</label>
-                        <input type="text" name="event_brand" value="${item.brand.replace(/"/g, '&quot;')}" required class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <input type="text" name="event_brand" value="${item.brand.replace(/"/g, '&quot;')}" required class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">修正 活動網址 *</label>
-                        <input type="url" name="event_url" value="${item.url}" required class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <input type="url" name="event_url" value="${item.url}" required class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">開始日期</label>
-                            <input type="text" name="event_start_date" value="${item.start_date || ''}" placeholder="2026/07/16" class="w-full p-2 border border-gray-200 rounded text-sm">
+                            <input type="text" name="event_start_date" value="${item.start_date || ''}" placeholder="2026/07/16" class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">截止日期 *</label>
-                            <input type="text" name="event_end_date" value="${item.end_date || ''}" required placeholder="2026-09-02" class="w-full p-2 border border-gray-200 rounded text-sm">
+                            <input type="text" name="event_end_date" value="${item.end_date || ''}" required placeholder="2026-09-02" class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">修正 抽獎形式標籤</label>
-                        <div class="grid grid-cols-3 gap-1 bg-gray-50 p-2 rounded border border-gray-100 text-[10px]">
-                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="登錄發票"> <span>登錄發票</span></label>
-                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="瓶蓋序號"> <span>瓶蓋序號</span></label>
-                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="罐底序號"> <span>罐底序號</span></label>
-                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="需回函"> <span>需回函</span></label>
-                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="需簡訊"> <span>需簡訊</span></label>
-                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="立即抽"> <span>立即抽</span></label>
+                        <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-150 text-xs">
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="登錄發票" onchange="syncIssueEventTags()" class="rounded text-blue-600"> <span>登錄發票</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="瓶蓋序號" onchange="syncIssueEventTags()" class="rounded text-blue-600"> <span>瓶蓋序號</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="罐底序號" onchange="syncIssueEventTags()" class="rounded text-blue-600"> <span>罐底序號</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="需回函" onchange="syncIssueEventTags()" class="rounded text-blue-600"> <span>需回函</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="需簡訊" onchange="syncIssueEventTags()" class="rounded text-blue-600"> <span>需簡訊</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="立即抽" onchange="syncIssueEventTags()" class="rounded text-blue-600"> <span>立即抽</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">已選標籤預覽</label>
+                        <div id="issueEventTagContainer" class="flex flex-wrap gap-1.5 p-2 bg-amber-50/50 border border-amber-100 rounded-lg min-h-[40px]">
+                            <span class="text-xs text-gray-400 italic">尚未勾選任何標籤...</span>
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">修正 活動細節備註</label>
-                        <input type="text" name="event_detail" placeholder="選填修正敘述" class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <textarea id="issueEventDetail" name="event_detail" rows="2" placeholder="選填修正敘述" class="w-full p-2 border border-gray-200 rounded-lg text-sm focus:outline-none" oninput="syncIssueEventTags()"></textarea>
                     </div>
                 `;
+                
+                // 預先帶入並勾選原有標籤
+                setTimeout(() => {
+                    if (item.detail) {
+                        const checkboxes = document.querySelectorAll('input[name="issue_event_tags"]');
+                        checkboxes.forEach(cb => { if (item.detail.includes(cb.value)) cb.checked = true; });
+                        let customPart = item.detail.includes('|') ? item.detail.split('|')[1].trim() : item.detail;
+                        checkboxes.forEach(cb => { customPart = customPart.replace(cb.value, "").replace(/[\s\[\]]/g, ""); });
+                        document.getElementById('issueEventDetail').value = customPart;
+                    }
+                    syncIssueEventTags();
+                }, 50);
             }
             document.getElementById('issueModal').classList.remove('hidden');
         }
@@ -426,13 +643,13 @@
                     }
                     payload.drink_name = e.target.querySelector('[name="drink_name"]').value;
                     payload.drink_price = price;
-                    payload.drink_remark = compileRemarkWithTags(e.target, 'issue_drink_tags', 'drink_remark');
+                    payload.drink_remark = document.getElementById('issueDrinkRemark').value.trim() || null;
                 } else {
                     payload.event_brand = e.target.querySelector('[name="event_brand"]').value;
                     payload.event_url = e.target.querySelector('[name="event_url"]').value;
                     payload.event_start_date = normalizeDate(e.target.querySelector('[name="event_start_date"]').value);
                     payload.event_end_date = normalizeDate(e.target.querySelector('[name="event_end_date"]').value);
-                    payload.event_detail = compileRemarkWithTags(e.target, 'issue_event_tags', 'event_detail');
+                    payload.event_detail = document.getElementById('issueEventDetail').value.trim() || null;
                 }
 
                 const { error } = await supabaseClient.from('issue_reports').insert([payload]);
@@ -447,9 +664,6 @@
                 submitBtn.innerText = "送出勘誤";
             }
         });
-
-        document.getElementById('drinkForm').addEventListener('submit', function(e) { submitFormLogic(e, 'drink'); });
-        document.getElementById('eventForm').addEventListener('submit', function(e) { submitFormLogic(e, 'event'); });
 
         window.onload = initData;
     </script>
