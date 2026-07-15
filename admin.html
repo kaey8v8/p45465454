@@ -319,6 +319,9 @@
                         <button onclick="openEditModal('drink', ${d.id})" class="text-xs bg-white text-gray-600 hover:text-blue-600 border border-gray-200 px-2.5 py-1.5 rounded-lg shadow-xs flex items-center gap-1 transition">
                             ✏️ 編輯
                         </button>
+                        <button onclick="deleteItem('drink', ${d.id})" class="text-xs bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-2.5 py-1.5 rounded-lg ml-2 transition">
+                            🗑️ 刪除
+                        </button>
                     </div>
                 `).join('');
             }
@@ -335,6 +338,9 @@
                         </div>
                         <button onclick="openEditModal('event', ${ev.id})" class="text-xs bg-white text-gray-600 hover:text-blue-600 border border-gray-200 px-2.5 py-1.5 rounded-lg shadow-xs flex items-center gap-1 transition">
                             ✏️ 編輯
+                        </button>
+                        <button onclick="deleteItem('event', ${ev.id})" class="text-xs bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-2.5 py-1.5 rounded-lg ml-2 transition">
+                            🗑️ 刪除
                         </button>
                     </div>
                 `).join('');
@@ -419,6 +425,28 @@
             }).join('');
         }
 
+        
+        // ====================刪除項目函式
+        async function deleteItem(type, id) {
+            if (!confirm("確定要徹底刪除此項目嗎？此操作無法復原。")) return;
+        
+            const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
+            
+            try {
+                const { error } = await supabaseClient
+                    .from(targetTable)
+                    .delete()
+                    .eq('id', id);
+        
+                if (error) throw error;
+        
+                alert("刪除成功！");
+                refreshAllData(); // 重新整理列表
+            } catch (e) {
+                console.error(e);
+                alert("刪除失敗：" + e.message);
+            }
+        }
         // ==================== 🛠️ 標籤視覺化與文字同步邏輯 ====================
 
         // 移除單一飲料標籤（點擊 Tag 上的 ✕）
