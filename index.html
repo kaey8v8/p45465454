@@ -92,23 +92,22 @@
         // 🛠️ 填入你的 Supabase 設定
         const SUPABASE_URL = "https://akxaulhkzlckkaxdthxo.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_LP-Jf6ygyLe4rKNVeqS83A_E5jmMzw0";
-        
-        // 修正：將變數名稱改為 supabaseClient，避免衝突
+
+        // 修正：將變數名稱改為 supabaseClient，避免與 CDN 全域物件衝突
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let allDrinks = [];
-        
+
         // 頁面初始化：從 drink_submissions 讀取已核准 (status = 'approved') 的飲料資料
         async function initData() {
             try {
-                //底下的 supabase 也要同步改成 supabaseClient
                 const { data, error } = await supabaseClient
                     .from('drink_submissions')
                     .select('*')
                     .eq('status', 'approved')
                     .order('created_at', { ascending: false });
-        
+
                 if (error) throw error;
-        
+
                 allDrinks = data || [];
                 renderResults(allDrinks);
             } catch (e) {
@@ -157,7 +156,7 @@
 
         // 核心提交處理邏輯
         async function submitFormLogic(e, type) {
-            e.preventDefault(); // 🛠️ 100% 攔截瀏覽器跳轉行為
+            e.preventDefault(); // 100% 攔截瀏覽器預設的跳轉與重新整理行為
             
             const formData = new FormData(e.target);
             const dataObj = Object.fromEntries(formData.entries());
@@ -171,7 +170,7 @@
                 let error;
 
                 if (type === 'drink') {
-                    const { error: drinkError } = await supabase
+                    const { error: drinkError } = await supabaseClient
                         .from('drink_submissions')
                         .insert([{
                             name: dataObj.name,
@@ -180,7 +179,7 @@
                         }]);
                     error = drinkError;
                 } else {
-                    const { error: eventError } = await supabase
+                    const { error: eventError } = await supabaseClient
                         .from('event_submissions')
                         .insert([{
                             brand: dataObj.brand,
@@ -205,7 +204,7 @@
             }
         }
 
-        // 🛠️ 用非侵入式監聽器綁定表單提交，取代舊的 HTML inline onsubmit
+        // 用非侵入式監聽器綁定表單提交
         document.getElementById('drinkForm').addEventListener('submit', function(e) {
             submitFormLogic(e, 'drink');
         });
@@ -213,7 +212,6 @@
         document.getElementById('eventForm').addEventListener('submit', function(e) {
             submitFormLogic(e, 'event');
         });
-
 
         window.onload = initData;
     </script>
