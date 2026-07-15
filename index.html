@@ -154,7 +154,7 @@
             document.getElementById('tabEvent').className = !isDrink ? "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600" : "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400";
         }
 
-        // 核心提交處理邏輯
+// 核心提交處理邏輯
         async function submitFormLogic(e, type) {
             e.preventDefault(); // 100% 攔截瀏覽器預設的跳轉與重新整理行為
             
@@ -175,7 +175,8 @@
                         .insert([{
                             name: dataObj.name,
                             price: parseInt(dataObj.price, 10),
-                            remark: dataObj.remark || null
+                            remark: dataObj.remark || null,
+                            status: 'pending' // 🛠️ 主動帶上狀態，強行通過 RLS 的 (status = 'pending') 檢查
                         }]);
                     error = drinkError;
                 } else {
@@ -185,7 +186,8 @@
                             brand: dataObj.brand,
                             url: dataObj.url,
                             end_date: dataObj.end_date || null,
-                            detail: dataObj.detail || null
+                            detail: dataObj.detail || null,
+                            status: 'pending' // 🛠️ 主動帶上狀態
                         }]);
                     error = eventError;
                 }
