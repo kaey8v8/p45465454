@@ -100,7 +100,6 @@
         // 頁面初始化：從 drink_submissions 讀取已核准 (status = 'approved') 的飲料資料
         async function initData() {
             try {
-                // 修正：向正確的雙表架構 drink_submissions 撈取 status 等於 approved 的資料
                 const { data, error } = await supabase
                     .from('drink_submissions')
                     .select('*')
@@ -155,14 +154,14 @@
             document.getElementById('tabEvent').className = !isDrink ? "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600" : "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400";
         }
 
-        // 當使用者提交表單時，寫入對應的資料表，並預設 status 為 'pending'
-        async function handleFormSubmit(event, type) {
-            event.preventDefault();
-            const formData = new FormData(event.target);
+        // 核心提交處理邏輯
+        async function submitFormLogic(e, type) {
+            e.preventDefault(); // 🛠️ 100% 攔截瀏覽器跳轉行為
+            
+            const formData = new FormData(e.target);
             const dataObj = Object.fromEntries(formData.entries());
             
-            // 顯示「傳送中」狀態
-            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn.innerText;
             submitBtn.innerText = "正在安全傳送中...";
             submitBtn.disabled = true;
@@ -171,7 +170,6 @@
                 let error;
 
                 if (type === 'drink') {
-                    // 修正：改寫入 drink_submissions 表，且資料庫會自動把 status 代入 'pending'
                     const { error: drinkError } = await supabase
                         .from('drink_submissions')
                         .insert([{
@@ -181,7 +179,6 @@
                         }]);
                     error = drinkError;
                 } else {
-                    // 修正：改寫入 event_submissions 表，且資料庫會自動把 status 代入 'pending'
                     const { error: eventError } = await supabase
                         .from('event_submissions')
                         .insert([{
@@ -196,16 +193,26 @@
                 if (error) throw error;
 
                 alert("🎉 回報成功！資料已安全送往管理員審核佇列。");
-                event.target.reset();
+                e.target.reset();
 
-            } catch (e) {
-                console.error("提交失敗：", e);
-                alert(`傳送失敗：${e.message || '請檢查網路連線或資料庫權限'}`);
+            } catch (err) {
+                console.error("提交失敗詳細紀錄：", err);
+                alert(`傳送失敗：${err.message || '請檢查網路連線或資料庫權限'}`);
             } finally {
                 submitBtn.innerText = originalBtnText;
                 submitBtn.disabled = false;
             }
         }
+
+        // 🛠️ 用非侵入式監聽器綁定表單提交，取代舊的 HTML inline onsubmit
+        document.getElementById('drinkForm').addEventListener('submit', function(e) {
+            submitFormLogic(e, 'drink');
+        });
+
+        document.getElementById('eventForm').addEventListener('submit', function(e) {
+            submitFormLogic(e, 'event');
+        });
+
 
         window.onload = initData;
     </script>
