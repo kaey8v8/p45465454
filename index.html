@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>7-11 飲料抽抽樂適用商品查詢</title>
+    <title>7-11 飲料抽抽樂情報站</title>
     <!-- 使用 Tailwind CSS 快速美化手機排版 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Supabase 官方 CDN 腳本 -->
@@ -21,49 +21,41 @@
 
     <main class="max-w-md mx-auto px-4 mt-6 space-y-6">
         
-        <!-- 區塊一：快速搜尋列與分開顯示區 -->
-        <section class="bg-white p-4 rounded-xl shadow-sm space-y-4">
-            <h2 class="font-semibold text-gray-700">🔍 適用商品與活動查詢</h2>
-            <input type="text" id="searchInput" placeholder="輸入名稱、價格或品牌搜尋..." 
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
-            
-            <!-- 搜尋結果展示區：拆分為飲料與活動 -->
-            <div class="space-y-4 max-h-[500px] overflow-y-auto pt-2">
+        <!-- 區塊一：主看板大分頁切換（徹底分離畫面） -->
+        <section class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="flex border-b border-gray-100 bg-gray-50/50">
+                <button id="viewTabDrink" onclick="switchView('drink')" class="flex-1 py-3 text-center text-sm font-bold border-b-2 border-green-500 text-green-600 transition">
+                    🥤 適用商品查詢
+                </button>
+                <button id="viewTabEvent" onclick="switchView('event')" class="flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition">
+                    🎁 品牌抽獎活動
+                </button>
+            </div>
+
+            <div class="p-4 space-y-4">
+                <!-- 搜尋輸入框 -->
+                <input type="text" id="searchInput" placeholder="輸入關鍵字搜尋..." 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
                 
-                <!-- 1. 飲料顯示區 -->
-                <div>
-                    <div class="flex items-center space-x-2 mb-2">
-                        <span class="w-2 h-4 bg-green-500 rounded-full"></span>
-                        <h3 class="text-xs font-bold text-gray-500 tracking-wider uppercase">適用飲料品項</h3>
-                    </div>
-                    <div id="drinkResultsList" class="space-y-2">
-                        <p class="text-xs text-gray-400 text-center py-2">資料同步中...</p>
-                    </div>
+                <!-- 飲料看板內容 -->
+                <div id="drinkViewSection" class="space-y-2 max-h-96 overflow-y-auto">
+                    <p class="text-xs text-gray-400 text-center py-4">資料同步中...</p>
                 </div>
 
-                <hr class="border-gray-100 my-2">
-
-                <!-- 2. 活動顯示區 -->
-                <div>
-                    <div class="flex items-center space-x-2 mb-2">
-                        <span class="w-2 h-4 bg-blue-500 rounded-full"></span>
-                        <h3 class="text-xs font-bold text-gray-500 tracking-wider uppercase">進行中品牌抽獎活動</h3>
-                    </div>
-                    <div id="eventResultsList" class="space-y-2">
-                        <p class="text-xs text-gray-400 text-center py-2">資料同步中...</p>
-                    </div>
+                <!-- 活動看板內容 (預設隱藏) -->
+                <div id="eventViewSection" class="space-y-2 max-h-96 overflow-y-auto hidden">
+                    <p class="text-xs text-gray-400 text-center py-4">資料同步中...</p>
                 </div>
-
             </div>
         </section>
 
-        <!-- 區塊二：熱心回報表單 -->
+        <!-- 區塊二：熱心新增回報表單 -->
         <section class="bg-white p-4 rounded-xl shadow-sm space-y-4">
-            <h2 class="font-semibold text-gray-700">✍️ 發現漏網之魚？歡迎回報！</h2>
+            <h2 class="font-semibold text-gray-700">✍️ 發現漏網之魚？歡迎新增！</h2>
             
             <div class="flex space-x-2 border-b border-gray-200 pb-2">
-                <button id="tabDrink" onclick="switchForm('drink')" class="flex-1 text-center pb-2 text-sm font-medium border-b-2 border-green-500 text-green-600">回報飲料</button>
-                <button id="tabEvent" onclick="switchForm('event')" class="flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400">回報抽獎活動</button>
+                <button id="tabDrink" onclick="switchForm('drink')" class="flex-1 text-center pb-2 text-sm font-medium border-b-2 border-green-500 text-green-600">新增飲料</button>
+                <button id="tabEvent" onclick="switchForm('event')" class="flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400">新增抽獎活動</button>
             </div>
 
             <!-- 飲料表單 -->
@@ -74,8 +66,8 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">單瓶價格 *</label>
-                        <input type="number" name="price" required placeholder="65" class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <label class="block text-xs text-gray-500 mb-1">單瓶價格 (上限 $500) *</label>
+                        <input type="number" name="price" max="500" required placeholder="65" class="w-full p-2 border border-gray-200 rounded text-sm">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">備註 (選填)</label>
@@ -85,11 +77,11 @@
                 <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg transition">提交審核</button>
             </form>
 
-            <!-- 活動表單 (預設隱藏) -->
+            <!-- 活動表單 -->
             <form id="eventForm" class="space-y-3 hidden">
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">品牌/活動名稱 *</label>
-                    <input type="text" name="brand" required placeholder="例如：可口可樂-無糖" class="w-full p-2 border border-gray-200 rounded text-sm">
+                    <input type="text" name="brand" required placeholder="例如：可口可樂" class="w-full p-2 border border-gray-200 rounded text-sm">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">活動登錄網址 *</label>
@@ -97,35 +89,82 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">截止日期</label>
-                        <input type="text" name="end_date" placeholder="2026/09/02" class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <label class="block text-xs text-gray-500 mb-1">開始日期 (選填)</label>
+                        <input type="text" name="start_date" placeholder="例如：2026/07/16" class="w-full p-2 border border-gray-200 rounded text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">活動細節備註</label>
-                        <input type="text" name="detail" placeholder="例如：任兩瓶登發票" class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <label class="block text-xs text-gray-500 mb-1">截止日期 (必填) *</label>
+                        <input type="text" name="end_date" required placeholder="例如：2026-09-02" class="w-full p-2 border border-gray-200 rounded text-sm">
                     </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">活動細節備註 (選填)</label>
+                    <input type="text" name="detail" placeholder="例如：任兩瓶登錄發票抽大獎" class="w-full p-2 border border-gray-200 rounded text-sm">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg transition">提交審核</button>
             </form>
         </section>
     </main>
 
+    <!-- 🚨 錯誤回報專用獨立彈窗 (Modal) -->
+    <div id="issueModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4 shadow-xl">
+            <div>
+                <h3 class="font-bold text-gray-800 text-base flex items-center space-x-1">
+                    <span>🚨</span> <span id="issueModalTargetName">品項名稱</span> 錯誤了嗎？
+                </h3>
+                <p class="text-xs text-gray-400 mt-1">請在下方提供正確的資訊，管理員會盡快修正！</p>
+            </div>
+            <form id="issueForm" class="space-y-3">
+                <input type="hidden" id="issueTargetType" name="target_type">
+                <input type="hidden" id="issueTargetId" name="target_id">
+                <input type="hidden" id="issueTargetNameInput" name="target_name">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">正確的資訊說明 *</label>
+                    <textarea name="correct_info" required rows="3" placeholder="例如：這款價格調漲到 75 元了 / 活動網址失效了..." class="w-full p-2 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-red-500"></textarea>
+                </div>
+                <div class="flex space-x-2 pt-2">
+                    <button type="button" onclick="closeIssueModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium py-2 rounded-lg transition">取消</button>
+                    <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-2 rounded-lg transition">送出回報</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 幕後 JavaScript 核心邏輯 -->
     <script>
-        // 🛠️ Supabase 設定
         const SUPABASE_URL = "https://akxaulhkzlckkaxdthxo.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_LP-Jf6ygyLe4rKNVeqS83A_E5jmMzw0";
-
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // 分開儲存原始資料集
         let allDrinks = [];
         let allEvents = [];
+        let currentView = 'drink'; // 'drink' 或 'event'
 
-        // 頁面初始化：併行讀取已核准的飲料與活動資料
+        // 日期規格化核心算法：將各種雜亂輸入揉成 YYYY-MM-DD
+        function normalizeDate(dateStr) {
+            if (!dateStr) return null;
+            let clean = dateStr.trim().replace(/[\/\.]/g, '-'); // 把 / 或 . 變成 -
+            
+            // 處理 20260716 這種純數字格式
+            if (/^\d{8}$/.test(clean)) {
+                clean = `${clean.substring(0,4)}-${clean.substring(4,6)}-${clean.substring(6,8)}`;
+            }
+            
+            // 處理 2026-7-16 改成 2026-07-16
+            let parts = clean.split('-');
+            if (parts.length === 3) {
+                let y = parts[0];
+                let m = parts[1].padStart(2, '0');
+                let d = parts[2].padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            return clean; // 若不符合規範則交給後端拋錯驗證
+        }
+
+        // 初始化抓取已核准資料
         async function initData() {
             try {
-                // 使用 Promise.all 同時發出兩個請求，效能最佳
                 const [drinkRes, eventRes] = await Promise.all([
                     supabaseClient.from('drink_submissions').select('*').eq('status', 'approved').order('created_at', { ascending: false }),
                     supabaseClient.from('event_submissions').select('*').eq('status', 'approved').order('created_at', { ascending: false })
@@ -137,152 +176,189 @@
                 allDrinks = drinkRes.data || [];
                 allEvents = eventRes.data || [];
 
-                // 首次渲染全部資料
                 renderDrinks(allDrinks);
                 renderEvents(allEvents);
-
             } catch (e) {
                 console.error("資料載入失敗：", e);
-                const errHtml = `<p class="text-xs text-red-500 text-center py-2">資料載入失敗，請重新整理</p>`;
-                document.getElementById('drinkResultsList').innerHTML = errHtml;
-                document.getElementById('eventResultsList').innerHTML = errHtml;
+                const errHtml = `<p class="text-xs text-red-500 text-center py-4">資料載入失敗，請重新整理</p>`;
+                document.getElementById('drinkViewSection').innerHTML = errHtml;
+                document.getElementById('eventViewSection').innerHTML = errHtml;
             }
         }
 
-        // 渲染飲料清單 (綠色風格)
+        // 渲染商品查詢 (帶有 🚨 錯誤回報按紐)
         function renderDrinks(data) {
-            const list = document.getElementById('drinkResultsList');
+            const container = document.getElementById('drinkViewSection');
             if (data.length === 0) {
-                list.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">暫無相關飲料商品</p>`;
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">沒有找到相關飲料商品</p>`;
                 return;
             }
-            list.innerHTML = data.map(item => `
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-green-200 transition">
-                    <div>
-                        <div class="font-medium text-sm text-gray-800">${item.name}</div>
-                        ${item.remark ? `<div class="text-xs text-gray-400">${item.remark}</div>` : ''}
+            container.innerHTML = data.map(item => `
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <div class="min-w-0 flex-1">
+                        <div class="font-medium text-sm text-gray-800 truncate">${item.name}</div>
+                        ${item.remark ? `<div class="text-xs text-gray-400 truncate">${item.remark}</div>` : ''}
                     </div>
-                    <div class="text-green-600 font-bold text-sm flex-shrink-0 ml-2">${item.price} 元</div>
+                    <div class="flex items-center space-x-3 flex-shrink-0 ml-2">
+                        <span class="text-green-600 font-bold text-sm">${item.price} 元</span>
+                        <button onclick="openIssueModal('drink', ${item.id}, '${item.name.replace(/'/g, "\\'")}')" class="text-gray-300 hover:text-red-500 text-xs transition" title="回報錯誤">🚨</button>
+                    </div>
                 </div>
             `).join('');
         }
 
-        // 渲染活動清單 (藍色風格卡片)
+        // 渲染活動看板 (帶有 🚨 錯誤回報按紐)
         function renderEvents(data) {
-            const list = document.getElementById('eventResultsList');
+            const container = document.getElementById('eventViewSection');
             if (data.length === 0) {
-                list.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">暫無相關抽獎活動</p>`;
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">沒有找到相關抽獎活動</p>`;
                 return;
             }
-            list.innerHTML = data.map(item => `
-                <div class="p-3 bg-blue-50/50 rounded-lg border border-blue-100 hover:border-blue-300 transition space-y-1">
-                    <div class="flex justify-between items-start">
+            container.innerHTML = data.map(item => `
+                <div class="p-3 bg-blue-50/40 rounded-lg border border-blue-100 space-y-1 relative group">
+                    <button onclick="openIssueModal('event', ${item.id}, '${item.brand.replace(/'/g, "\\'")}')" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs transition" title="回報錯誤">🚨</button>
+                    <div class="flex justify-between items-start pr-6">
                         <span class="font-semibold text-sm text-blue-900">【${item.brand}】</span>
-                        ${item.end_date ? `<span class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">至 ${item.end_date}</span>` : ''}
                     </div>
-                    ${item.detail ? `<div class="text-xs text-gray-600 pl-1">${item.detail}</div>` : ''}
-                    ${item.url ? `
-                        <div class="pt-1 pl-1">
-                            <a href="${item.url}" target="_blank" class="text-xs text-blue-600 hover:underline inline-flex items-center">
-                                前往活動登錄 🔗
-                            </a>
-                        </div>
-                    ` : ''}
+                    <div class="text-[11px] text-gray-400 flex space-x-2">
+                        ${item.start_date ? `<span>起：${item.start_date}</span>` : ''}
+                        <span>止：${item.end_date}</span>
+                    </div>
+                    ${item.detail ? `<div class="text-xs text-gray-600">${item.detail}</div>` : ''}
+                    ${item.url ? `<div class="pt-1"><a href="${item.url}" target="_blank" class="text-xs text-blue-600 hover:underline">前往活動官網 🔗</a></div>` : ''}
                 </div>
             `).join('');
         }
 
-        // 關鍵字連動搜尋：同時過濾飲料與活動
+        // 切換主看板顯示畫面
+        function switchView(type) {
+            currentView = type;
+            const isDrink = type === 'drink';
+            document.getElementById('drinkViewSection').classList.toggle('hidden', !isDrink);
+            document.getElementById('eventViewSection').classList.toggle('hidden', isDrink);
+            
+            document.getElementById('viewTabDrink').className = isDrink ? "flex-1 py-3 text-center text-sm font-bold border-b-2 border-green-500 text-green-600 transition" : "flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition";
+            document.getElementById('viewTabEvent').className = !isDrink ? "flex-1 py-3 text-center text-sm font-bold border-b-2 border-blue-500 text-blue-600 transition" : "flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition";
+        }
+
+        // 連動即時搜尋
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const keyword = e.target.value.toLowerCase().trim();
-            
-            // 過濾飲料
-            const filteredDrinks = allDrinks.filter(item => 
-                item.name.toLowerCase().includes(keyword) || 
-                item.price.toString().includes(keyword) ||
-                (item.remark && item.remark.toLowerCase().includes(keyword))
-            );
-            
-            // 過濾活動
-            const filteredEvents = allEvents.filter(item => 
-                item.brand.toLowerCase().includes(keyword) ||
-                (item.detail && item.detail.toLowerCase().includes(keyword))
-            );
-
-            renderDrinks(filteredDrinks);
-            renderEvents(filteredEvents);
+            if (currentView === 'drink') {
+                const filtered = allDrinks.filter(item => item.name.toLowerCase().includes(keyword) || item.price.toString().includes(keyword));
+                renderDrinks(filtered);
+            } else {
+                const filtered = allEvents.filter(item => item.brand.toLowerCase().includes(keyword) || (item.detail && item.detail.toLowerCase().includes(keyword)));
+                renderEvents(filtered);
+            }
         });
 
-        // 切換飲料/活動表單的分流 UI
+        // 切換下方新增表單 UI
         function switchForm(type) {
             const isDrink = type === 'drink';
             document.getElementById('drinkForm').classList.toggle('hidden', !isDrink);
             document.getElementById('eventForm').classList.toggle('hidden', isDrink);
-            
             document.getElementById('tabDrink').className = isDrink ? "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-green-500 text-green-600" : "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400";
             document.getElementById('tabEvent').className = !isDrink ? "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600" : "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400";
         }
 
-        // 核心提交處理邏輯
+        // 新增商品/活動提交邏輯
         async function submitFormLogic(e, type) {
             e.preventDefault(); 
-            
             const formData = new FormData(e.target);
             const dataObj = Object.fromEntries(formData.entries());
-            
             const submitBtn = e.target.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerText;
-            submitBtn.innerText = "正在安全傳送中...";
+            
+            if (type === 'drink' && parseInt(dataObj.price, 10) > 500) {
+                alert("❌ 安全警告：單瓶飲料價格不可能大於 500 元！");
+                return;
+            }
+
+            submitBtn.innerText = "正在傳送中...";
             submitBtn.disabled = true;
 
             try {
                 let error;
-
                 if (type === 'drink') {
-                    const { error: drinkError } = await supabaseClient
-                        .from('drink_submissions')
-                        .insert([{
-                            name: dataObj.name,
-                            price: parseInt(dataObj.price, 10),
-                            remark: dataObj.remark || null,
-                            status: 'pending' 
-                        }]);
+                    const { error: drinkError } = await supabaseClient.from('drink_submissions').insert([{
+                        name: dataObj.name,
+                        price: parseInt(dataObj.price, 10),
+                        remark: dataObj.remark || null,
+                        status: 'pending'
+                    }]);
                     error = drinkError;
                 } else {
-                    const { error: eventError } = await supabaseClient
-                        .from('event_submissions')
-                        .insert([{
-                            brand: dataObj.brand,
-                            url: dataObj.url,
-                            end_date: dataObj.end_date || null,
-                            detail: dataObj.detail || null,
-                            status: 'pending' 
-                        }]);
+                    const finalStartDate = normalizeDate(dataObj.start_date);
+                    const finalEndDate = normalizeDate(dataObj.end_date);
+                    
+                    const { error: eventError } = await supabaseClient.from('event_submissions').insert([{
+                        brand: dataObj.brand,
+                        url: dataObj.url,
+                        start_date: finalStartDate,
+                        end_date: finalEndDate,
+                        detail: dataObj.detail || null,
+                        status: 'pending'
+                    }]);
                     error = eventError;
                 }
 
                 if (error) throw error;
-
-                alert("🎉 回報成功！資料已安全送往管理員審核佇列。");
+                alert("🎉 新增回報成功！已送往審核佇列。");
                 e.target.reset();
-
             } catch (err) {
-                console.error("提交失敗詳細紀錄：", err);
-                alert(`傳送失敗：${err.message || '請檢查網路連線或資料庫權限'}`);
+                alert(`傳送失敗：${err.message}`);
             } finally {
-                submitBtn.innerText = originalBtnText;
+                submitBtn.innerText = type === 'drink' ? "提交審核" : "提交審核";
                 submitBtn.disabled = false;
             }
         }
 
-        // 綁定表單提交
-        document.getElementById('drinkForm').addEventListener('submit', function(e) {
-            submitFormLogic(e, 'drink');
+        // 🚨 錯誤回報彈窗操控邏輯
+        function openIssueModal(type, id, name) {
+            document.getElementById('issueModalTargetName').innerText = name;
+            document.getElementById('issueTargetType').value = type;
+            document.getElementById('issueTargetId').value = id;
+            document.getElementById('issueTargetNameInput').value = name;
+            document.getElementById('issueModal').classList.remove('hidden');
+        }
+
+        function closeIssueModal() {
+            document.getElementById('issueModal').classList.add('hidden');
+            document.getElementById('issueForm').reset();
+        }
+
+        // 監聽錯誤回報表單提交
+        document.getElementById('issueForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const dataObj = Object.fromEntries(formData.entries());
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerText = "傳送中...";
+
+            try {
+                const { error } = await supabaseClient.from('issue_reports').insert([{
+                    target_type: dataObj.target_type,
+                    target_id: parseInt(dataObj.target_id, 10),
+                    target_name: dataObj.target_name,
+                    correct_info: dataObj.correct_info,
+                    status: 'pending'
+                }]);
+
+                if (error) throw error;
+                alert("🚨 感謝回報！管理員會核對並儘速修正錯誤資訊。");
+                closeIssueModal();
+            } catch (err) {
+                alert(`回報失敗：${err.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "送出回報";
+            }
         });
 
-        document.getElementById('eventForm').addEventListener('submit', function(e) {
-            submitFormLogic(e, 'event');
-        });
+        document.getElementById('drinkForm').addEventListener('submit', function(e) { submitFormLogic(e, 'drink'); });
+        document.getElementById('eventForm').addEventListener('submit', function(e) { submitFormLogic(e, 'event'); });
 
         window.onload = initData;
     </script>
