@@ -34,7 +34,7 @@
         </section>
 
         <div id="workSection" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
+
             <section class="lg:col-span-7 bg-white p-6 rounded-xl shadow-sm space-y-6">
                 <div class="border-b pb-3">
                     <h2 class="text-lg font-bold text-gray-800">📋 現有上架資料庫</h2>
@@ -198,7 +198,7 @@
         const YOUR_SUPABASE_ANON_KEY = "sb_publishable_LP-Jf6ygyLe4rKNVeqS83A_E5jmMzw0";
 
         const supabaseClient = supabase.createClient(YOUR_SUPABASE_URL, YOUR_SUPABASE_ANON_KEY);
-        
+
         let localDrinks = [];
         let localEvents = [];
         let localReports = [];
@@ -249,44 +249,44 @@
         // 核心：刷新整頁所有資料
         async function refreshAllData() {
             try {
+                // 1. 撈取所有必要的資料
                 const [drinksRes, eventsRes, reportsRes] = await Promise.all([
                     supabaseClient.from('drink_submissions').select('*'),
                     supabaseClient.from('event_submissions').select('*'),
-                    supabaseClient.from('issue_reports').select('*')
+                    supabaseClient.from('issue_reports').select('*') // 這是原本的勘誤表
                 ]);
-        
-                if (drinksRes.error || eventsRes.error || reportsRes.error) throw "資料撈取失敗";
-        
-                // 整理資料，並賦予統一的顯示名稱欄位 (display_name)
-                const processedDrinks = (drinksRes.data || []).map(d => ({ 
-                    ...d, table_source: 'drink_submissions', display_name: d.name 
-                }));
-                const processedEvents = (eventsRes.data || []).map(e => ({ 
-                    ...e, table_source: 'event_submissions', display_name: e.name 
-                }));
-                
-                // 處理勘誤：根據是否有 drink_name 或 event_brand 來決定顯示名稱
-                const processedReports = (reportsRes.data || []).map(r => ({ 
-                    ...r, 
-                    table_source: 'issue_reports',
-                    display_name: r.drink_name || r.event_brand || '未命名項目' 
-                }));
-        
-                localDrinks = processedDrinks.filter(d => d.status === 'approved');
-                localEvents = processedEvents.filter(e => e.status === 'approved');
-                
+
+                if (drinksRes.error) throw drinksRes.error;
+                if (eventsRes.error) throw eventsRes.error;
+                if (reportsRes.error) throw reportsRes.error;
+
+                // 2. 處理資料：注入 table_source 以便後續操作
+                const drinks = (drinksRes.data || []).map(d => ({ ...d, table_source: 'drink_submissions' }));
+                const events = (eventsRes.data || []).map(e => ({ ...e, table_source: 'event_submissions' }));
+                const reports = (reportsRes.data || []).map(r => ({ ...r, table_source: 'issue_reports' }));
+
+                // 3. 分類顯示
+                localDrinks = drinks.filter(d => d.status === 'approved');
+                localEvents = events.filter(e => e.status === 'approved');
+
+                // 合併所有待審核的項目 (包含新增申請 與 勘誤回報)
                 const pendingItems = [
-                    ...processedDrinks.filter(d => d.status === 'pending'),
-                    ...processedEvents.filter(e => e.status === 'pending'),
-                    ...processedReports.filter(r => r.status === 'pending')
+                    ...drinks.filter(d => d.status === 'pending'),
+                    ...events.filter(e => e.status === 'pending'),
+                    ...reports.filter(r => r.status === 'pending')
                 ];
-        
+
+                // 4. 更新 UI
+                document.getElementById('countActiveDrinks').innerText = localDrinks.length;
+                document.getElementById('countActiveEvents').innerText = localEvents.length;
                 document.getElementById('pendingCount').innerText = pendingItems.length;
+
+                renderActiveLists();
                 renderPendingList(pendingItems); 
-        
+
             } catch (e) {
                 console.error(e);
-                alert("撈取失敗：" + e.message);
+                alert("撈取資料時出錯：" + e.message);
             }
         }
         // 切換左側頁籤 (飲料 / 活動)
@@ -366,7 +366,7 @@
 
             reportContainer.innerHTML = localReports.map(rep => {
                 const targetTypeLabel = rep.target_type === 'drink' ? '🍹 飲料勘誤' : '🎉 活動勘誤';
-                
+
                 let originalContent = "查無或已被刪除";
                 if (rep.target_type === 'drink') {
                     const matched = localDrinks.find(item => item.id === rep.target_id);
@@ -433,16 +433,32 @@
                 `;
             }).join('');
         }
+
 // 渲染邏輯
         function renderPendingList(items) {
             const container = document.getElementById('reportListContainer');
-            
             container.innerHTML = items.map(item => `
+            
+            // 如果沒有資料，顯示提示
+            if (!items || items.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400">目前無待審核項目</p>';
+                return;
+            }
+        
+            container.innerHTML = items.map(item => {
+                // 除錯用：如果名稱不存在，印出來看看
+                if (!item.name) console.log("Missing name for item:", item);
+                
+                // 優先顯示名稱，如果沒有則嘗試顯示其他識別欄位 (例如 id 或 user_name)
+                const displayName = item.name || `項目 #${item.id}`;
+                
+                return `
                 <div class="p-4 bg-yellow-50 rounded-xl border border-yellow-200 shadow-xs mb-4">
                     <span class="bg-yellow-500 text-white text-[10px] px-2 py-0.5 rounded font-bold">
                         ${item.table_source === 'issue_reports' ? '勘誤回報' : '新增申請'}
                     </span>
-                    <div class="text-sm font-bold mt-2">${item.display_name}</div>
+                    <div class="text-sm font-bold mt-2">${item.name || '項目名稱'}</div>
+                    <div class="text-sm font-bold mt-2">${displayName}</div>
                     <div class="text-xs text-gray-600 mt-1">備註: ${item.remark || '無'}</div>
                     <div class="grid grid-cols-2 gap-2 mt-3">
                         <button onclick="handlePending('${item.table_source}', ${item.id}, 'rejected')" class="bg-white border border-gray-300 py-1 rounded text-xs">拒絕</button>
@@ -450,6 +466,7 @@
                     </div>
                 </div>
             `).join('');
+            `}).join('');
         }
         async function handlePending(tableName, id, action) {
             try {
@@ -457,7 +474,7 @@
                     .from(tableName)
                     .update({ status: action })
                     .eq('id', id);
-                
+
                 if (error) throw error;
                 alert("操作成功！");
                 refreshAllData();
@@ -468,17 +485,17 @@
         // ====================刪除項目函式
         async function deleteItem(type, id) {
             if (!confirm("確定要徹底刪除此項目嗎？此操作無法復原。")) return;
-        
+
             const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
-            
+
             try {
                 const { error } = await supabaseClient
                     .from(targetTable)
                     .delete()
                     .eq('id', id);
-        
+
                 if (error) throw error;
-        
+
                 alert("刪除成功！");
                 refreshAllData(); // 重新整理列表
             } catch (e) {
@@ -511,7 +528,7 @@
             const checkboxes = document.querySelectorAll('input[name="modalDrinkTags"]');
             const tagContainer = document.getElementById('drinkTagContainer');
             const textInput = document.getElementById('modalDrinkRemark');
-            
+
             const selectedTags = [];
             checkboxes.forEach(cb => {
                 if (cb.checked) selectedTags.push(cb.value);
