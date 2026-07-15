@@ -22,9 +22,10 @@
         <!-- 登入區塊 -->
         <section id="loginSection" class="bg-white p-6 rounded-xl shadow-sm space-y-4">
             <h2 class="font-semibold text-gray-700 text-center text-base">🔑 管理員認證</h2>
-            <p class="text-xs text-gray-400 text-center">請輸入在 Supabase Authentication 建立的帳號密碼</p>
+            <p class="text-xs text-gray-400 text-center">請輸入管理員帳號與密碼</p>
             <div class="space-y-2">
-                <input type="email" id="adminEmail" placeholder="管理員帳號 (Email)..." 
+                <!-- 這裡假裝是普通帳號輸入框 -->
+                <input type="text" id="adminUsername" placeholder="管理員帳號..." 
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                 <input type="password" id="adminPassword" placeholder="管理員密碼..." 
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
@@ -62,17 +63,20 @@
 
         // 管理員登入邏輯
         async function handleLogin() {
-            const email = document.getElementById('adminEmail').value.trim();
+            const username = document.getElementById('adminUsername').value.trim();
             const password = document.getElementById('adminPassword').value.trim();
 
-            if (!email || !password) {
+            if (!username || !password) {
                 alert("請完整輸入帳號與密碼！");
                 return;
             }
 
+            // 💡 關鍵偷撇步：如果使用者輸入的帳號沒有包含 @，自動幫他在後面補上假信箱後綴
+            const fakeEmail = username.includes('@') ? username : `${username}@fakeadmin.com`;
+
             try {
                 const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
+                    email: fakeEmail,
                     password: password
                 });
 
@@ -102,7 +106,6 @@
             listContainer.innerHTML = `<p class="text-sm text-gray-400 text-center py-4">正在從資料庫撈取待審資料...</p>`;
 
             try {
-                // 1. 並行讀取飲料與活動的待審資料表
                 const [drinksRes, eventsRes] = await Promise.all([
                     supabase.from('pending_drinks').select('*').order('created_at', { ascending: true }),
                     supabase.from('pending_events').select('*').order('created_at', { ascending: true })
@@ -114,7 +117,6 @@
                 const pendingDrinks = drinksRes.data || [];
                 const pendingEvents = eventsRes.data || [];
 
-                // 2. 計算總待審量
                 currentPendingCount = pendingDrinks.length + pendingEvents.length;
                 document.getElementById('pendingCount').innerText = currentPendingCount;
 
@@ -125,19 +127,17 @@
 
                 listContainer.innerHTML = "";
 
-                // 3. 渲染飲料待審卡片
                 pendingDrinks.forEach(item => {
                     renderPendingCard('drink', item.id, item);
                 });
 
-                // 4. 渲染活動待審卡片
                 pendingEvents.forEach(item => {
                     renderPendingCard('event', item.id, item);
                 });
 
             } catch (e) {
                 console.error(e);
-                listContainer.innerHTML = `<p class="text-xs text-red-500 text-center">載入失敗，可能權限不足或資料表不存在。</p>`;
+                listContainer.innerHTML = `<p class="text-xs text-red-500 text-center">載入失敗，請確認權限設定。</p>`;
             }
         }
 
@@ -195,7 +195,6 @@
             const officialTable = type === 'drink' ? 'drinks' : 'events';
 
             try {
-                // 1. 如果是核准上架，先把這筆資料撈出來，塞進正式表
                 if (action === 'approve') {
                     const { data: sourceData, error: fetchErr } = await supabase
                         .from(pendingTable)
@@ -205,7 +204,6 @@
 
                     if (fetchErr) throw fetchErr;
 
-                    // 整理要寫入正式表的欄位（排除 id 和 created_at 由正式表自動生成）
                     let insertData = {};
                     if (type === 'drink') {
                         insertData = { name: sourceData.name, price: sourceData.price, remark: sourceData.remark };
@@ -220,7 +218,6 @@
                     if (insertErr) throw insertErr;
                 }
 
-                // 2. 不管是核准還是拒絕，最後都從「待審核資料表」中將它刪除
                 const { error: deleteErr } = await supabase
                     .from(pendingTable)
                     .delete()
@@ -228,7 +225,6 @@
 
                 if (deleteErr) throw deleteErr;
 
-                // 3. 更新前端網頁 UI
                 const targetCard = document.getElementById(cardElementId);
                 if (targetCard) targetCard.remove();
 
