@@ -21,13 +21,13 @@
 
     <main class="max-w-md mx-auto px-4 mt-6 space-y-6">
         
-        <!-- 區塊一：主看板大分頁切換（徹底分離畫面） -->
+        <!-- 區塊一：主看板大分頁切換（聯動下方回報區） -->
         <section class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="flex border-b border-gray-100 bg-gray-50/50">
-                <button id="viewTabDrink" onclick="switchView('drink')" class="flex-1 py-3 text-center text-sm font-bold border-b-2 border-green-500 text-green-600 transition">
+                <button id="viewTabDrink" onclick="globalSwitch('drink')" class="flex-1 py-3 text-center text-sm font-bold border-b-2 border-green-500 text-green-600 transition">
                     🥤 適用商品查詢
                 </button>
-                <button id="viewTabEvent" onclick="switchView('event')" class="flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition">
+                <button id="viewTabEvent" onclick="globalSwitch('event')" class="flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition">
                     🎁 品牌抽獎活動
                 </button>
             </div>
@@ -51,33 +51,35 @@
 
         <!-- 區塊二：熱心新增回報表單 -->
         <section class="bg-white p-4 rounded-xl shadow-sm space-y-4">
-            <h2 class="font-semibold text-gray-700">✍️ 發現漏網之魚？歡迎新增！</h2>
-            
-            <div class="flex space-x-2 border-b border-gray-200 pb-2">
-                <button id="tabDrink" onclick="switchForm('drink')" class="flex-1 text-center pb-2 text-sm font-medium border-b-2 border-green-500 text-green-600">新增飲料</button>
-                <button id="tabEvent" onclick="switchForm('event')" class="flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400">新增抽獎活動</button>
-            </div>
+            <h2 id="formSectionTitle" class="font-semibold text-gray-700">✍️ 發現漏網飲料？歡迎新增！</h2>
 
-            <!-- 飲料表單 -->
+            <!-- 飲料新增表單 -->
             <form id="drinkForm" class="space-y-3">
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">飲料品項名稱 *</label>
                     <input type="text" name="name" required placeholder="例如：純在芒果甘露" class="w-full p-2 border border-gray-200 rounded text-sm">
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">單瓶價格 (上限 $500) *</label>
-                        <input type="number" name="price" max="500" required placeholder="65" class="w-full p-2 border border-gray-200 rounded text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">備註 (選填)</label>
-                        <input type="text" name="remark" placeholder="例如：現正買一送一" class="w-full p-2 border border-gray-200 rounded text-sm">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">單瓶價格 (上限 $500) *</label>
+                    <input type="number" name="price" max="500" required placeholder="65" class="w-full p-2 border border-gray-200 rounded text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">常用狀態標籤 (可多選)</label>
+                    <div class="grid grid-cols-2 gap-2 bg-gray-50 p-2.5 rounded border border-gray-100">
+                        <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer"><input type="checkbox" name="drink_tags" value="現正買一送一" class="rounded text-green-600 focus:ring-green-500"> <span>現正買一送一</span></label>
+                        <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer"><input type="checkbox" name="drink_tags" value="袋裝" class="rounded text-green-600 focus:ring-green-500"> <span>袋裝</span></label>
+                        <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer"><input type="checkbox" name="drink_tags" value="不確定有無抽抽樂" class="rounded text-green-600 focus:ring-green-500"> <span>不確定有抽抽樂</span></label>
+                        <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer"><input type="checkbox" name="drink_tags" value="已無在架上看到" class="rounded text-green-600 focus:ring-green-500"> <span>已無在架上看到</span></label>
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg transition">提交審核</button>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">其他備註 (選填)</label>
+                    <input type="text" name="remark" placeholder="例如：店員說特價只到本週日" class="w-full p-2 border border-gray-200 rounded text-sm">
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg transition">提交飲料審核</button>
             </form>
 
-            <!-- 活動表單 -->
+            <!-- 活動新增表單 -->
             <form id="eventForm" class="space-y-3 hidden">
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">品牌/活動名稱 *</label>
@@ -90,42 +92,54 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">開始日期 (選填)</label>
-                        <input type="text" name="start_date" placeholder="例如：2026/07/16" class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <input type="text" name="start_date" placeholder="2026/07/16" class="w-full p-2 border border-gray-200 rounded text-sm">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">截止日期 (必填) *</label>
-                        <input type="text" name="end_date" required placeholder="例如：2026-09-02" class="w-full p-2 border border-gray-200 rounded text-sm">
+                        <input type="text" name="end_date" required placeholder="2026-09-02" class="w-full p-2 border border-gray-200 rounded text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">抽獎形式標籤 (可多選)</label>
+                    <div class="grid grid-cols-3 gap-2 bg-gray-50 p-2.5 rounded border border-gray-100 text-[11px]">
+                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="登錄發票" class="rounded text-blue-600 focus:ring-blue-500"> <span>登錄發票</span></label>
+                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="瓶蓋序號" class="rounded text-blue-600 focus:ring-blue-500"> <span>瓶蓋序號</span></label>
+                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="罐底序號" class="rounded text-blue-600 focus:ring-blue-500"> <span>罐底序號</span></label>
+                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="需回函" class="rounded text-blue-600 focus:ring-blue-500"> <span>需回函</span></label>
+                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="需簡訊" class="rounded text-blue-600 focus:ring-blue-500"> <span>需簡訊</span></label>
+                        <label class="flex items-center space-x-1 text-gray-600 cursor-pointer"><input type="checkbox" name="event_tags" value="立即抽" class="rounded text-blue-600 focus:ring-blue-500"> <span>立即抽</span></label>
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">活動細節備註 (選填)</label>
-                    <input type="text" name="detail" placeholder="例如：任兩瓶登錄發票抽大獎" class="w-full p-2 border border-gray-200 rounded text-sm">
+                    <input type="text" name="detail" placeholder="例如：滿額 199 元加碼送周邊" class="w-full p-2 border border-gray-200 rounded text-sm">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg transition">提交審核</button>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg transition">提交活動審核</button>
             </form>
         </section>
     </main>
 
-    <!-- 🚨 錯誤回報專用獨立彈窗 (Modal) -->
+    <!-- 🚨 結構化錯誤回報專用彈窗 (Modal) -->
     <div id="issueModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4 shadow-xl">
+        <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
             <div>
                 <h3 class="font-bold text-gray-800 text-base flex items-center space-x-1">
-                    <span>🚨</span> <span id="issueModalTargetName">品項名稱</span> 錯誤了嗎？
+                    <span>🚨</span> <span id="issueModalTitleText">項目</span> 資訊勘誤回報
                 </h3>
-                <p class="text-xs text-gray-400 mt-1">請在下方提供正確的資訊，管理員會盡快修正！</p>
+                <p class="text-xs text-gray-400 mt-1">請修正下方錯誤的欄位，以便管理員進行覆蓋審查。</p>
             </div>
+            
             <form id="issueForm" class="space-y-3">
+                <!-- 隱藏控制項 -->
                 <input type="hidden" id="issueTargetType" name="target_type">
                 <input type="hidden" id="issueTargetId" name="target_id">
-                <input type="hidden" id="issueTargetNameInput" name="target_name">
-                <div>
-                    <label class="block text-xs text-gray-500 mb-1">正確的資訊說明 *</label>
-                    <textarea name="correct_info" required rows="3" placeholder="例如：這款價格調漲到 75 元了 / 活動網址失效了..." class="w-full p-2 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-red-500"></textarea>
-                </div>
+
+                <!-- 容器：動態塞入飲料或活動的專屬修改欄位 -->
+                <div id="issueDynamicFields" class="space-y-3 text-left"></div>
+
                 <div class="flex space-x-2 pt-2">
                     <button type="button" onclick="closeIssueModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium py-2 rounded-lg transition">取消</button>
-                    <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-2 rounded-lg transition">送出回報</button>
+                    <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-2 rounded-lg transition">送出勘誤</button>
                 </div>
             </form>
         </div>
@@ -141,28 +155,21 @@
         let allEvents = [];
         let currentView = 'drink'; // 'drink' 或 'event'
 
-        // 日期規格化核心算法：將各種雜亂輸入揉成 YYYY-MM-DD
+        // 日期規格化核心
         function normalizeDate(dateStr) {
             if (!dateStr) return null;
-            let clean = dateStr.trim().replace(/[\/\.]/g, '-'); // 把 / 或 . 變成 -
-            
-            // 處理 20260716 這種純數字格式
+            let clean = dateStr.trim().replace(/[\/\.]/g, '-');
             if (/^\d{8}$/.test(clean)) {
                 clean = `${clean.substring(0,4)}-${clean.substring(4,6)}-${clean.substring(6,8)}`;
             }
-            
-            // 處理 2026-7-16 改成 2026-07-16
             let parts = clean.split('-');
             if (parts.length === 3) {
-                let y = parts[0];
-                let m = parts[1].padStart(2, '0');
-                let d = parts[2].padStart(2, '0');
-                return `${y}-${m}-${d}`;
+                return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
             }
-            return clean; // 若不符合規範則交給後端拋錯驗證
+            return clean;
         }
 
-        // 初始化抓取已核准資料
+        // 初始化
         async function initData() {
             try {
                 const [drinkRes, eventRes] = await Promise.all([
@@ -170,23 +177,17 @@
                     supabaseClient.from('event_submissions').select('*').eq('status', 'approved').order('created_at', { ascending: false })
                 ]);
 
-                if (drinkRes.error) throw drinkRes.error;
-                if (eventRes.error) throw eventRes.error;
-
                 allDrinks = drinkRes.data || [];
                 allEvents = eventRes.data || [];
 
                 renderDrinks(allDrinks);
                 renderEvents(allEvents);
             } catch (e) {
-                console.error("資料載入失敗：", e);
-                const errHtml = `<p class="text-xs text-red-500 text-center py-4">資料載入失敗，請重新整理</p>`;
-                document.getElementById('drinkViewSection').innerHTML = errHtml;
-                document.getElementById('eventViewSection').innerHTML = errHtml;
+                console.error(e);
             }
         }
 
-        // 渲染商品查詢 (帶有 🚨 錯誤回報按紐)
+        // 渲染商品查詢 (帶有 🚨 按鈕)
         function renderDrinks(data) {
             const container = document.getElementById('drinkViewSection');
             if (data.length === 0) {
@@ -201,13 +202,13 @@
                     </div>
                     <div class="flex items-center space-x-3 flex-shrink-0 ml-2">
                         <span class="text-green-600 font-bold text-sm">${item.price} 元</span>
-                        <button onclick="openIssueModal('drink', ${item.id}, '${item.name.replace(/'/g, "\\'")}')" class="text-gray-300 hover:text-red-500 text-xs transition" title="回報錯誤">🚨</button>
+                        <button onclick="openIssueModal('drink', ${item.id})" class="text-gray-300 hover:text-red-500 text-xs transition" title="資訊勘誤">🚨</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 渲染活動看板 (帶有 🚨 錯誤回報按紐)
+        // 渲染活動看板 (帶有 🚨 按鈕)
         function renderEvents(data) {
             const container = document.getElementById('eventViewSection');
             if (data.length === 0) {
@@ -216,7 +217,7 @@
             }
             container.innerHTML = data.map(item => `
                 <div class="p-3 bg-blue-50/40 rounded-lg border border-blue-100 space-y-1 relative group">
-                    <button onclick="openIssueModal('event', ${item.id}, '${item.brand.replace(/'/g, "\\'")}')" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs transition" title="回報錯誤">🚨</button>
+                    <button onclick="openIssueModal('event', ${item.id})" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs transition" title="資訊勘誤">🚨</button>
                     <div class="flex justify-between items-start pr-6">
                         <span class="font-semibold text-sm text-blue-900">【${item.brand}】</span>
                     </div>
@@ -230,18 +231,29 @@
             `).join('');
         }
 
-        // 切換主看板顯示畫面
-        function switchView(type) {
+        // 全局二合一聯動切換（點擊上方 Tab，下方回報區同步切換）
+        function globalSwitch(type) {
             currentView = type;
             const isDrink = type === 'drink';
+            
+            // 1. 切換上方看板區
             document.getElementById('drinkViewSection').classList.toggle('hidden', !isDrink);
             document.getElementById('eventViewSection').classList.toggle('hidden', isDrink);
-            
             document.getElementById('viewTabDrink').className = isDrink ? "flex-1 py-3 text-center text-sm font-bold border-b-2 border-green-500 text-green-600 transition" : "flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition";
             document.getElementById('viewTabEvent').className = !isDrink ? "flex-1 py-3 text-center text-sm font-bold border-b-2 border-blue-500 text-blue-600 transition" : "flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition";
+            
+            // 2. 切換下方新增區
+            document.getElementById('drinkForm').classList.toggle('hidden', !isDrink);
+            document.getElementById('eventForm').classList.toggle('hidden', isDrink);
+            document.getElementById('formSectionTitle').innerText = isDrink ? "✍️ 發現漏網飲料？歡迎新增！" : "✍️ 發現漏網活動？歡迎新增！";
+            
+            // 清空搜尋條件
+            document.getElementById('searchInput').value = "";
+            renderDrinks(allDrinks);
+            renderEvents(allEvents);
         }
 
-        // 連動即時搜尋
+        // 即時搜尋
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const keyword = e.target.value.toLowerCase().trim();
             if (currentView === 'drink') {
@@ -253,72 +265,136 @@
             }
         });
 
-        // 切換下方新增表單 UI
-        function switchForm(type) {
-            const isDrink = type === 'drink';
-            document.getElementById('drinkForm').classList.toggle('hidden', !isDrink);
-            document.getElementById('eventForm').classList.toggle('hidden', isDrink);
-            document.getElementById('tabDrink').className = isDrink ? "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-green-500 text-green-600" : "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400";
-            document.getElementById('tabEvent').className = !isDrink ? "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600" : "flex-1 text-center pb-2 text-sm font-medium border-b-2 border-transparent text-gray-400";
+        // 輔助函式：整合 Checkbox 與輸入框文字
+        function compileRemarkWithTags(formElement, checkboxName, textInputName) {
+            const text = formElement.querySelector(`[name="${textInputName}"]`).value.trim();
+            const checkedBoxes = Array.from(formElement.querySelectorAll(`[name="${checkboxName}"]:checked`)).map(cb => cb.value);
+            
+            if (checkedBoxes.length > 0) {
+                const tagsStr = `[${checkedBoxes.join(', ')}]`;
+                return text ? `${tagsStr} ${text}` : tagsStr;
+            }
+            return text || null;
         }
 
-        // 新增商品/活動提交邏輯
+        // 新增提交處理
         async function submitFormLogic(e, type) {
-            e.preventDefault(); 
-            const formData = new FormData(e.target);
-            const dataObj = Object.fromEntries(formData.entries());
+            e.preventDefault();
             const submitBtn = e.target.querySelector('button[type="submit"]');
             
-            if (type === 'drink' && parseInt(dataObj.price, 10) > 500) {
-                alert("❌ 安全警告：單瓶飲料價格不可能大於 500 元！");
-                return;
-            }
-
-            submitBtn.innerText = "正在傳送中...";
-            submitBtn.disabled = true;
-
-            try {
-                let error;
-                if (type === 'drink') {
-                    const { error: drinkError } = await supabaseClient.from('drink_submissions').insert([{
-                        name: dataObj.name,
-                        price: parseInt(dataObj.price, 10),
-                        remark: dataObj.remark || null,
-                        status: 'pending'
-                    }]);
-                    error = drinkError;
-                } else {
-                    const finalStartDate = normalizeDate(dataObj.start_date);
-                    const finalEndDate = normalizeDate(dataObj.end_date);
-                    
-                    const { error: eventError } = await supabaseClient.from('event_submissions').insert([{
-                        brand: dataObj.brand,
-                        url: dataObj.url,
-                        start_date: finalStartDate,
-                        end_date: finalEndDate,
-                        detail: dataObj.detail || null,
-                        status: 'pending'
-                    }]);
-                    error = eventError;
+            if (type === 'drink') {
+                const name = e.target.querySelector('[name="name"]').value;
+                const price = parseInt(e.target.querySelector('[name="price"]').value, 10);
+                
+                if (price > 500) {
+                    alert("❌ 安全警告：單瓶飲料價格不可能大於 500 元！");
+                    return;
                 }
+                const compiledRemark = compileRemarkWithTags(e.target, 'drink_tags', 'remark');
 
-                if (error) throw error;
-                alert("🎉 新增回報成功！已送往審核佇列。");
-                e.target.reset();
-            } catch (err) {
-                alert(`傳送失敗：${err.message}`);
-            } finally {
-                submitBtn.innerText = type === 'drink' ? "提交審核" : "提交審核";
-                submitBtn.disabled = false;
+                submitBtn.disabled = true;
+                try {
+                    const { error } = await supabaseClient.from('drink_submissions').insert([{
+                        name, price, remark: compiledRemark, status: 'pending'
+                    }]);
+                    if (error) throw error;
+                    alert("🎉 新增飲料成功！已送往審核。");
+                    e.target.reset();
+                } catch(err) { alert(err.message); } finally { submitBtn.disabled = false; }
+
+            } else {
+                const brand = e.target.querySelector('[name="brand"]').value;
+                const url = e.target.querySelector('[name="url"]').value;
+                const start_date = normalizeDate(e.target.querySelector('[name="start_date"]').value);
+                const end_date = normalizeDate(e.target.querySelector('[name="end_date"]').value);
+                const compiledDetail = compileRemarkWithTags(e.target, 'event_tags', 'detail');
+
+                submitBtn.disabled = true;
+                try {
+                    const { error } = await supabaseClient.from('event_submissions').insert([{
+                        brand, url, start_date, end_date, detail: compiledDetail, status: 'pending'
+                    }]);
+                    if (error) throw error;
+                    alert("🎉 新增活動成功！已送往審核。");
+                    e.target.reset();
+                } catch(err) { alert(err.message); } finally { submitBtn.disabled = false; }
             }
         }
 
-        // 🚨 錯誤回報彈窗操控邏輯
-        function openIssueModal(type, id, name) {
-            document.getElementById('issueModalTargetName').innerText = name;
+        // 🚨 開啟結構化勘誤彈窗
+        function openIssueModal(type, id) {
             document.getElementById('issueTargetType').value = type;
             document.getElementById('issueTargetId').value = id;
-            document.getElementById('issueTargetNameInput').value = name;
+            
+            const fieldsContainer = document.getElementById('issueDynamicFields');
+            
+            if (type === 'drink') {
+                document.getElementById('issueModalTitleText').innerText = "🥤 飲料";
+                const item = allDrinks.find(d => d.id === id) || { name: '', price: '' };
+                
+                fieldsContainer.innerHTML = `
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">修正 品項名稱 *</label>
+                        <input type="text" name="drink_name" value="${item.name.replace(/"/g, '&quot;')}" required class="w-full p-2 border border-gray-200 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">修正 單瓶價格 *</label>
+                        <input type="number" name="drink_price" value="${item.price}" max="500" required class="w-full p-2 border border-gray-200 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">修正 常用狀態標籤</label>
+                        <div class="grid grid-cols-2 gap-2 bg-gray-50 p-2 rounded border border-gray-100 text-[11px]">
+                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_drink_tags" value="現正買一送一"> <span>買一送一</span></label>
+                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_drink_tags" value="袋裝"> <span>袋裝</span></label>
+                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_drink_tags" value="不確定有無抽抽樂"> <span>未確認</span></label>
+                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_drink_tags" value="已無在架上看到"> <span>已缺貨</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">修正 其他備註</label>
+                        <input type="text" name="drink_remark" placeholder="選填修正敘述" class="w-full p-2 border border-gray-200 rounded text-sm">
+                    </div>
+                `;
+            } else {
+                document.getElementById('issueModalTitleText').innerText = "🎁 活動";
+                const item = allEvents.find(e => e.id === id) || { brand: '', url: '', start_date: '', end_date: '' };
+                
+                fieldsContainer.innerHTML = `
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">修正 品牌/活動名稱 *</label>
+                        <input type="text" name="event_brand" value="${item.brand.replace(/"/g, '&quot;')}" required class="w-full p-2 border border-gray-200 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">修正 活動網址 *</label>
+                        <input type="url" name="event_url" value="${item.url}" required class="w-full p-2 border border-gray-200 rounded text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">開始日期</label>
+                            <input type="text" name="event_start_date" value="${item.start_date || ''}" placeholder="2026/07/16" class="w-full p-2 border border-gray-200 rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">截止日期 *</label>
+                            <input type="text" name="event_end_date" value="${item.end_date || ''}" required placeholder="2026-09-02" class="w-full p-2 border border-gray-200 rounded text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">修正 抽獎形式標籤</label>
+                        <div class="grid grid-cols-3 gap-1 bg-gray-50 p-2 rounded border border-gray-100 text-[10px]">
+                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="登錄發票"> <span>登錄發票</span></label>
+                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="瓶蓋序號"> <span>瓶蓋序號</span></label>
+                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="罐底序號"> <span>罐底序號</span></label>
+                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="需回函"> <span>需回函</span></label>
+                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="需簡訊"> <span>需簡訊</span></label>
+                            <label class="flex items-center space-x-1"><input type="checkbox" name="issue_event_tags" value="立即抽"> <span>立即抽</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">修正 活動細節備註</label>
+                        <input type="text" name="event_detail" placeholder="選填修正敘述" class="w-full p-2 border border-gray-200 rounded text-sm">
+                    </div>
+                `;
+            }
             document.getElementById('issueModal').classList.remove('hidden');
         }
 
@@ -327,33 +403,48 @@
             document.getElementById('issueForm').reset();
         }
 
-        // 監聽錯誤回報表單提交
+        // 勘誤表單送出邏輯
         document.getElementById('issueForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const formData = new FormData(e.target);
-            const dataObj = Object.fromEntries(formData.entries());
             const submitBtn = e.target.querySelector('button[type="submit"]');
+            const type = document.getElementById('issueTargetType').value;
+            const id = parseInt(document.getElementById('issueTargetId').value, 10);
             
             submitBtn.disabled = true;
             submitBtn.innerText = "傳送中...";
 
             try {
-                const { error } = await supabaseClient.from('issue_reports').insert([{
-                    target_type: dataObj.target_type,
-                    target_id: parseInt(dataObj.target_id, 10),
-                    target_name: dataObj.target_name,
-                    correct_info: dataObj.correct_info,
-                    status: 'pending'
-                }]);
+                let payload = { target_type: type, target_id: id, status: 'pending' };
 
+                if (type === 'drink') {
+                    const price = parseInt(e.target.querySelector('[name="drink_price"]').value, 10);
+                    if (price > 500) {
+                        alert("❌ 安全警告：價格不得大於 500 元！");
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = "送出勘誤";
+                        return;
+                    }
+                    payload.drink_name = e.target.querySelector('[name="drink_name"]').value;
+                    payload.drink_price = price;
+                    payload.drink_remark = compileRemarkWithTags(e.target, 'issue_drink_tags', 'drink_remark');
+                } else {
+                    payload.event_brand = e.target.querySelector('[name="event_brand"]').value;
+                    payload.event_url = e.target.querySelector('[name="event_url"]').value;
+                    payload.event_start_date = normalizeDate(e.target.querySelector('[name="event_start_date"]').value);
+                    payload.event_end_date = normalizeDate(e.target.querySelector('[name="event_end_date"]').value);
+                    payload.event_detail = compileRemarkWithTags(e.target, 'issue_event_tags', 'event_detail');
+                }
+
+                const { error } = await supabaseClient.from('issue_reports').insert([payload]);
                 if (error) throw error;
-                alert("🚨 感謝回報！管理員會核對並儘速修正錯誤資訊。");
+
+                alert("🚨 勘誤回報成功！管理員已收到修正規格表。");
                 closeIssueModal();
             } catch (err) {
                 alert(`回報失敗：${err.message}`);
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerText = "送出回報";
+                submitBtn.innerText = "送出勘誤";
             }
         });
 
