@@ -37,7 +37,7 @@
         <!-- 雙欄工作區 (預設隱藏) -->
         <div id="workSection" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
-            <!-- 【左側】：現有上架品項列表 (佔 7 欄) -->
+            <!-- 【左側】：現有上架品項列表 -->
             <section class="lg:col-span-7 bg-white p-6 rounded-xl shadow-sm space-y-6">
                 <div class="border-b pb-3">
                     <h2 class="text-lg font-bold text-gray-800">📋 現有上架資料庫</h2>
@@ -61,7 +61,7 @@
                 <div id="eventListContainer" class="space-y-3 max-h-[600px] overflow-y-auto pr-1 hidden"></div>
             </section>
 
-            <!-- 【右側】：使用者回報審核區 (佔 5 欄) -->
+            <!-- 【右側】：使用者回報審核區 -->
             <section class="lg:col-span-5 bg-white p-6 rounded-xl shadow-sm space-y-4">
                 <div class="flex justify-between items-center border-b pb-3">
                     <div>
@@ -79,7 +79,7 @@
 
     <!-- 🛠️ 手動修改/彈窗元件 Modal -->
     <div id="editModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl space-y-4 relative">
+        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl space-y-4 relative max-h-[90vh] overflow-y-auto">
             <h3 id="modalTitle" class="text-lg font-bold text-gray-800">✏️ 編輯項目</h3>
             <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg">✕</button>
 
@@ -98,9 +98,31 @@
                         <label class="block text-xs text-gray-400 font-medium mb-1">價格</label>
                         <input type="number" id="modalDrinkPrice" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
                     </div>
+                    <!-- ✨ 補上：與使用者回報介面相同的核取方塊標籤 -->
                     <div>
-                        <label class="block text-xs text-gray-400 font-medium mb-1">備註 / 活動限制</label>
-                        <textarea id="modalDrinkRemark" rows="3" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"></textarea>
+                        <label class="block text-xs text-gray-400 font-medium mb-1">優惠活動限制 (可複選)</label>
+                        <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-150 text-xs">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalDrinkTags" value="買一送一" class="rounded text-blue-600">
+                                <span>買一送一</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalDrinkTags" value="第二件半價" class="rounded text-blue-600">
+                                <span>第二件半價</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalDrinkTags" value="第二件折10元" class="rounded text-blue-600">
+                                <span>第二件折10元</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalDrinkTags" value="單杯特價" class="rounded text-blue-600">
+                                <span>單杯特價</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 font-medium mb-1">其他備註說明</label>
+                        <textarea id="modalDrinkRemark" rows="2" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"></textarea>
                     </div>
                 </div>
 
@@ -114,12 +136,19 @@
                         <label class="block text-xs text-gray-400 font-medium mb-1">活動網址</label>
                         <input type="url" id="modalEventUrl" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
                     </div>
-                    <div>
-                        <label class="block text-xs text-gray-400 font-medium mb-1">截止日期</label>
-                        <input type="text" id="modalEventEndDate" placeholder="格式如：2026/12/31" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <!-- ✨ 補上：開始日期與截止日期 -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs text-gray-400 font-medium mb-1">開始日期</label>
+                            <input type="text" id="modalEventStartDate" placeholder="如：2026/01/01" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 font-medium mb-1">截止日期</label>
+                            <input type="text" id="modalEventEndDate" placeholder="如：2026/12/31" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-400 font-medium mb-1">活動細節</label>
+                        <label class="block text-xs text-gray-400 font-medium mb-1">活動細節說明</label>
                         <textarea id="modalEventDetail" rows="3" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"></textarea>
                     </div>
                 </div>
@@ -133,7 +162,7 @@
     </div>
 
     <script>
-        // 🛠️ Supabase 設定
+        // 🛠&emsp;Supabase 設定
         const YOUR_SUPABASE_URL = "https://akxaulhkzlckkaxdthxo.supabase.co"; 
         const YOUR_SUPABASE_ANON_KEY = "sb_publishable_LP-Jf6ygyLe4rKNVeqS83A_E5jmMzw0";
 
@@ -189,7 +218,6 @@
         // 核心：刷新整頁所有資料
         async function refreshAllData() {
             try {
-                // 同時撈取「已核准前台資料」以及「使用者勘誤回報待審清單」
                 const [drinksRes, eventsRes, reportsRes] = await Promise.all([
                     supabaseClient.from('drink_submissions').select('*').eq('status', 'approved').order('id', { ascending: false }),
                     supabaseClient.from('event_submissions').select('*').eq('status', 'approved').order('id', { ascending: false }),
@@ -204,7 +232,6 @@
                 localEvents = eventsRes.data || [];
                 localReports = reportsRes.data || [];
 
-                // 更新現有件數
                 document.getElementById('countActiveDrinks').innerText = localDrinks.length;
                 document.getElementById('countActiveEvents').innerText = localEvents.length;
                 document.getElementById('pendingCount').innerText = localReports.length;
@@ -269,7 +296,7 @@
                     <div class="p-3.5 bg-gray-50 rounded-lg border border-gray-150 flex justify-between items-center hover:bg-gray-100/70 transition">
                         <div class="flex-1 min-w-0 pr-4">
                             <div class="font-semibold text-gray-800 text-sm truncate">${ev.brand}</div>
-                            <div class="text-xs text-gray-400 mt-0.5">截止: ${ev.end_date || '無'}</div>
+                            <div class="text-xs text-gray-400 mt-0.5">時間: ${ev.start_date || '未填'} ~ ${ev.end_date || '未填'}</div>
                         </div>
                         <button onclick="openEditModal('event', ${ev.id})" class="text-xs bg-white text-gray-600 hover:text-blue-600 border border-gray-200 px-2.5 py-1.5 rounded-lg shadow-xs flex items-center gap-1 transition">
                             ✏️ 編輯
@@ -290,17 +317,15 @@
             reportContainer.innerHTML = localReports.map(rep => {
                 const targetTypeLabel = rep.target_type === 'drink' ? '🍹 飲料勘誤' : '🎉 活動勘誤';
                 
-                // 找出該筆回報鎖定的原資料本體
                 let originalContent = "查無或已被刪除";
                 if (rep.target_type === 'drink') {
                     const matched = localDrinks.find(item => item.id === rep.target_id);
                     if (matched) originalContent = `名稱: ${matched.name} (${matched.price}元) / 備註: ${matched.remark || '無'}`;
                 } else {
                     const matched = localEvents.find(item => item.id === rep.target_id);
-                    if (matched) originalContent = `品牌: ${matched.brand} / 截止: ${matched.end_date || '無'}`;
+                    if (matched) originalContent = `品牌: ${matched.brand} / 時間: ${matched.start_date || '未填'} ~ ${matched.end_date || '未填'}`;
                 }
 
-                // 準備使用者回報新資料的展示
                 let newReportedContent = "";
                 if (rep.target_type === 'drink') {
                     newReportedContent = `
@@ -319,7 +344,10 @@
                         <div class="space-y-1 text-xs mt-1">
                             <div class="bg-amber-100/50 p-1 rounded truncate">品牌：${rep.event_brand || '<span class="text-gray-400">未變更</span>'}</div>
                             <div class="bg-amber-100/50 p-1 rounded truncate">網址：<a href="${rep.event_url || '#'}" target="_blank" class="text-blue-600 underline text-[10px] break-all">${rep.event_url || '未變更'}</a></div>
-                            <div class="bg-amber-100/50 p-1 rounded">截止日：${rep.event_end_date || '<span class="text-gray-400">未變更</span>'}</div>
+                            <div class="grid grid-cols-2 gap-1 bg-amber-100/50 p-1 rounded">
+                                <div>開始：${rep.event_start_date || '<span class="text-gray-400">未變更</span>'}</div>
+                                <div>結束：${rep.event_end_date || '<span class="text-gray-400">未變更</span>'}</div>
+                            </div>
                         </div>
                         <div class="text-xs text-amber-700 mt-2 bg-amber-50 p-1.5 rounded border border-amber-100">
                             <strong>原因/備註：</strong>${rep.event_detail || '無'}
@@ -334,18 +362,15 @@
                             <span class="text-[10px] text-gray-400">ID: ${rep.id}</span>
                         </div>
                         
-                        <!-- 對照原資料 -->
                         <div class="text-xs bg-gray-100/80 p-2 rounded text-gray-500 border border-gray-200">
                             <strong class="text-gray-700 block">🔍 當前原資料庫內容：</strong>
                             ${originalContent}
                         </div>
 
-                        <!-- 回報新數值 -->
                         <div class="space-y-1">
                             ${newReportedContent}
                         </div>
 
-                        <!-- 功能控制區：一鍵覆蓋 & 忽略 -->
                         <div class="grid grid-cols-2 gap-2 pt-1 border-t border-amber-200/50">
                             <button onclick="ignoreReport(${rep.id})" class="bg-white hover:bg-gray-100 text-gray-600 text-xs font-medium py-1.5 rounded-lg border border-gray-200 transition">
                                 ❌ 忽略
@@ -364,7 +389,10 @@
             document.getElementById('editItemType').value = type;
             document.getElementById('editItemId').value = id;
 
-            // 隱藏全部動態欄位
+            // 清空飲料的所有 Checkbox 勾選狀態
+            const checkboxes = document.querySelectorAll('input[name="modalDrinkTags"]');
+            checkboxes.forEach(cb => cb.checked = false);
+
             document.getElementById('modalDrinkFields').classList.add('hidden');
             document.getElementById('modalEventFields').classList.add('hidden');
 
@@ -377,6 +405,15 @@
                 document.getElementById('modalDrinkName').value = item.name;
                 document.getElementById('modalDrinkPrice').value = item.price;
                 document.getElementById('modalDrinkRemark').value = item.remark || "";
+
+                // ✨ 解析既有備註，勾選對應的核取方塊
+                if (item.remark) {
+                    checkboxes.forEach(cb => {
+                        if (item.remark.includes(cb.value)) {
+                            cb.checked = true;
+                        }
+                    });
+                }
             } else {
                 const item = localEvents.find(ev => ev.id === id);
                 if (!item) return;
@@ -385,7 +422,8 @@
 
                 document.getElementById('modalEventBrand').value = item.brand;
                 document.getElementById('modalEventUrl').value = item.url;
-                document.getElementById('modalEventEndDate').value = item.end_date || "";
+                document.getElementById('modalEventStartDate').value = item.start_date || ""; // 補上開始日期
+                document.getElementById('modalEventEndDate').value = item.end_date || "";     // 補上截止日期
                 document.getElementById('modalEventDetail').value = item.detail || "";
             }
 
@@ -406,16 +444,28 @@
             const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
 
             if (type === 'drink') {
+                // ✨ 整合核取方塊與文字欄位
+                const selectedTags = [];
+                const checkboxes = document.querySelectorAll('input[name="modalDrinkTags"]:checked');
+                checkboxes.forEach(cb => selectedTags.push(cb.value));
+                
+                const customRemark = document.getElementById('modalDrinkRemark').value.trim();
+                let finalRemark = selectedTags.join('、');
+                if (customRemark) {
+                    finalRemark = finalRemark ? `${finalRemark} | ${customRemark}` : customRemark;
+                }
+
                 updatePayload = {
                     name: document.getElementById('modalDrinkName').value.trim(),
                     price: parseInt(document.getElementById('modalDrinkPrice').value),
-                    remark: document.getElementById('modalDrinkRemark').value.trim()
+                    remark: finalRemark
                 };
             } else {
                 updatePayload = {
                     brand: document.getElementById('modalEventBrand').value.trim(),
                     url: document.getElementById('modalEventUrl').value.trim(),
-                    end_date: document.getElementById('modalEventEndDate').value.trim(),
+                    start_date: document.getElementById('modalEventStartDate').value.trim(), // 儲存開始日期
+                    end_date: document.getElementById('modalEventEndDate').value.trim(),     // 儲存截止日期
                     detail: document.getElementById('modalEventDetail').value.trim()
                 };
             }
@@ -440,7 +490,7 @@
 
         // ==================== 右側使用者回報處理邏輯 ====================
 
-        // 1. 忽略回報 (直接將回報單設為 rejected，原上架品項不做任何更動)
+        // 1. 忽略回報
         async function ignoreReport(reportId) {
             if (!confirm("確定要忽略這筆勘誤回報嗎？原資料將不做變更。")) return;
             try {
@@ -469,12 +519,10 @@
             if (!confirm(`確定要將此使用者回報的新數值，直接覆蓋 ID ${targetId} 的原資料嗎？`)) return;
 
             try {
-                // 第一步：整理要蓋過去的新資料 (僅覆蓋有填寫非空值的欄位)
                 let overwritePayload = {};
                 const targetTable = isDrink ? 'drink_submissions' : 'event_submissions';
 
                 if (isDrink) {
-                    // 若有新填資料就用回報的值，若無就維持原樣
                     const original = localDrinks.find(d => d.id === targetId) || {};
                     overwritePayload = {
                         name: report.drink_name ? report.drink_name.trim() : original.name,
@@ -486,7 +534,8 @@
                     overwritePayload = {
                         brand: report.event_brand ? report.event_brand.trim() : original.brand,
                         url: report.event_url ? report.event_url.trim() : original.url,
-                        end_date: report.event_end_date ? report.event_end_date.trim() : original.end_date,
+                        start_date: report.event_start_date ? report.event_start_date.trim() : original.start_date, // 覆蓋開始日期
+                        end_date: report.event_end_date ? report.event_end_date.trim() : original.end_date,         // 覆蓋截止日期
                         detail: report.event_detail ? report.event_detail.trim() : original.detail
                     };
                 }
@@ -499,15 +548,11 @@
 
                 if (updateOriginalRes.error) throw updateOriginalRes.error;
 
-                // 2b. 更新這張 issue_reports 回報單為已核准/已處理 (approved)
-                const { data: { user } } = await supabaseClient.auth.getUser();
-                const adminEmail = user ? user.email : 'Admin';
-
+                // 2b. ✨ 修正：更新 `issue_reports` 的狀態，直接移除了 admin_name 欄位，排除 Schema cache 錯誤！
                 const updateReportRes = await supabaseClient
                     .from('issue_reports')
                     .update({ 
-                        status: 'approved',
-                        admin_name: adminEmail
+                        status: 'approved'
                     })
                     .eq('id', reportId);
 
