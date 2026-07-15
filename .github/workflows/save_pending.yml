@@ -1,0 +1,35 @@
+name: Save Pending Report
+
+on:
+  repository_dispatch:
+    types: [submit_report]
+
+permissions:
+  contents: write
+
+jobs:
+  save_json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create pending folder if not exists
+        run: mkdir -p pending
+
+      - name: Save report file
+        run: |
+          # 讀取前台傳過來的 JSON 內容與檔名
+          FILE_NAME="${{ github.event.client_payload.fileName }}"
+          FILE_CONTENT="${{ github.event.client_payload.fileContent }}"
+          
+          # 將 Base64 內容解碼並寫入 pending 資料夾
+          echo "$FILE_CONTENT" | base64 --decode > "$FILE_NAME"
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add pending/
+          git commit -m "自動寫入待審核提案: ${{ github.event.client_payload.fileName }}"
+          git push
