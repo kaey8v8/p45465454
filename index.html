@@ -318,7 +318,7 @@
                 const response = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/dispatches`, {
                     method: "POST",
                     headers: {
-                        "Authorization": `token ${triggerToken}`,
+                        "Authorization": `Bearer ${triggerToken}`,
                         "Accept": "application/vnd.github.v3+json",
                         "Content-Type": "application/json"
                     },
