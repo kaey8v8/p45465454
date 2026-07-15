@@ -272,9 +272,14 @@
                 document.getElementById('countActiveDrinks').innerText = localDrinks.length;
                 document.getElementById('countActiveEvents').innerText = localEvents.length;
                 document.getElementById('pendingCount').innerText = localReports.length;
-    
+                
+                if (drinksRes.data) localDrinks = drinksRes.data;
+                if (eventsRes.data) localEvents = eventsRes.data;
+                if (reportsRes.data) localReports = reportsRes.data;
+                // 重新呼叫渲染函式
                 renderActiveLists();
                 renderReportsList();
+                renderReports();
     
             } catch (e) {
                 console.error(e);
@@ -347,24 +352,24 @@
         
         // 刪除函式
         async function deleteItem(type, id, name) {
-            if (!confirm(`確定要永久刪除「${name}」嗎？此動作無法復原。`)) return;
+            if (!confirm(`確定要刪除「${name}」嗎？`)) return;
         
-            const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
+            const tableName = type === 'drink' ? 'drink_submissions' : 'event_submissions';
+            
+            // 1. 執行刪除 (務必加上 await)
+            const { error } = await supabaseClient
+                .from(tableName)
+                .delete()
+                .eq('id', id);
         
-            try {
-                const { error } = await supabaseClient
-                    .from(targetTable)
-                    .delete()
-                    .eq('id', id);
-        
-                if (error) throw error;
-        
-                alert("刪除成功！");
-                refreshAllData();
-        
-            } catch (e) {
-                console.error(e);
-                alert("刪除失敗：" + e.message);
+            if (error) {
+                console.error("刪除失敗:", error);
+                alert("刪除失敗: " + error.message);
+            } else {
+                console.log("刪除成功，準備更新介面");
+                
+                // 2. 刪除成功後，立即重新抓取最新資料
+                await refreshAllData(); 
             }
         }
         
