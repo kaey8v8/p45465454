@@ -20,7 +20,6 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-6 mt-6 flex-1 w-full">
-        <!-- 登入區塊 -->
         <section id="loginSection" class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-sm space-y-4">
             <h2 class="font-semibold text-gray-700 text-center text-base">🔑 管理員認證</h2>
             <div class="space-y-2">
@@ -34,17 +33,14 @@
             </button>
         </section>
 
-        <!-- 雙欄工作區 (預設隱藏) -->
         <div id="workSection" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
-            <!-- 【左側】：現有上架品項列表 -->
             <section class="lg:col-span-7 bg-white p-6 rounded-xl shadow-sm space-y-6">
                 <div class="border-b pb-3">
                     <h2 class="text-lg font-bold text-gray-800">📋 現有上架資料庫</h2>
                     <p class="text-xs text-gray-400">在此檢視或手動編輯目前前台顯示的內容</p>
                 </div>
 
-                <!-- 分頁切換 (飲料 / 活動) -->
                 <div class="flex space-x-2 border-b border-gray-200 pb-px">
                     <button id="tabDrink" onclick="switchActiveTab('drink')" class="px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600">
                         🍹 飲料品項 (<span id="countActiveDrinks">0</span>)
@@ -54,14 +50,11 @@
                     </button>
                 </div>
 
-                <!-- 飲料品項列表 -->
                 <div id="drinkListContainer" class="space-y-3 max-h-[600px] overflow-y-auto pr-1"></div>
 
-                <!-- 活動品項列表 (預設隱藏) -->
                 <div id="eventListContainer" class="space-y-3 max-h-[600px] overflow-y-auto pr-1 hidden"></div>
             </section>
 
-            <!-- 【右側】：使用者回報審核區 -->
             <section class="lg:col-span-5 bg-white p-6 rounded-xl shadow-sm space-y-4">
                 <div class="flex justify-between items-center border-b pb-3">
                     <div>
@@ -71,24 +64,20 @@
                     <span id="pendingCount" class="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-bold">0</span>
                 </div>
 
-                <!-- 回報列表展示 -->
                 <div id="reportListContainer" class="space-y-4 max-h-[650px] overflow-y-auto pr-1"></div>
             </section>
         </div>
     </main>
 
-    <!-- 🛠️ 手動修改/彈窗元件 Modal -->
     <div id="editModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl space-y-4 relative max-h-[90vh] overflow-y-auto">
             <h3 id="modalTitle" class="text-lg font-bold text-gray-800">✏️ 編輯項目</h3>
             <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg">✕</button>
 
-            <!-- 表單內容動態替換 -->
-            <form id="editForm" class="space-y-3">
+            <form id="editForm" class="space-y-3" onsubmit="event.preventDefault();">
                 <input type="hidden" id="editItemType">
                 <input type="hidden" id="editItemId">
 
-                <!-- 飲料類表單 -->
                 <div id="modalDrinkFields" class="space-y-3 hidden">
                     <div>
                         <label class="block text-xs text-gray-400 font-medium mb-1">品項名稱</label>
@@ -98,35 +87,41 @@
                         <label class="block text-xs text-gray-400 font-medium mb-1">價格</label>
                         <input type="number" id="modalDrinkPrice" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
                     </div>
-                    <!-- ✨ 補上：與使用者回報介面相同的核取方塊標籤 -->
                     <div>
                         <label class="block text-xs text-gray-400 font-medium mb-1">優惠活動限制 (可複選)</label>
                         <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-150 text-xs">
                             <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="modalDrinkTags" value="買一送一" class="rounded text-blue-600">
+                                <input type="checkbox" name="modalDrinkTags" value="買一送一" onchange="syncDrinkTagsToRemark()" class="rounded text-blue-600">
                                 <span>買一送一</span>
                             </label>
                             <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="modalDrinkTags" value="第二件半價" class="rounded text-blue-600">
+                                <input type="checkbox" name="modalDrinkTags" value="第二件半價" onchange="syncDrinkTagsToRemark()" class="rounded text-blue-600">
                                 <span>第二件半價</span>
                             </label>
                             <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="modalDrinkTags" value="第二件折10元" class="rounded text-blue-600">
+                                <input type="checkbox" name="modalDrinkTags" value="第二件折10元" onchange="syncDrinkTagsToRemark()" class="rounded text-blue-600">
                                 <span>第二件折10元</span>
                             </label>
                             <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="modalDrinkTags" value="單杯特價" class="rounded text-blue-600">
+                                <input type="checkbox" name="modalDrinkTags" value="單杯特價" onchange="syncDrinkTagsToRemark()" class="rounded text-blue-600">
                                 <span>單杯特價</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalDrinkTags" value="不確定有抽抽樂" onchange="syncDrinkTagsToRemark()" class="rounded text-blue-600">
+                                <span>不確定有抽抽樂</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalDrinkTags" value="已無在架上看到" onchange="syncDrinkTagsToRemark()" class="rounded text-blue-600">
+                                <span>已無在架上看到</span>
                             </label>
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs text-gray-400 font-medium mb-1">其他備註說明</label>
-                        <textarea id="modalDrinkRemark" rows="2" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"></textarea>
+                        <textarea id="modalDrinkRemark" rows="2" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="勾選上方標籤將會自動填入此處，您也可以在後方加註說明。"></textarea>
                     </div>
                 </div>
 
-                <!-- 活動類表單 -->
                 <div id="modalEventFields" class="space-y-3 hidden">
                     <div>
                         <label class="block text-xs text-gray-400 font-medium mb-1">品牌</label>
@@ -136,20 +131,48 @@
                         <label class="block text-xs text-gray-400 font-medium mb-1">活動網址</label>
                         <input type="url" id="modalEventUrl" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
                     </div>
-                    <!-- ✨ 補上：開始日期與截止日期 -->
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs text-gray-400 font-medium mb-1">開始日期</label>
-                            <input type="text" id="modalEventStartDate" placeholder="如：2026/01/01" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                            <input type="text" id="modalEventStartDate" placeholder="如：2026-01-01" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-400 font-medium mb-1">截止日期</label>
-                            <input type="text" id="modalEventEndDate" placeholder="如：2026/12/31" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                            <input type="text" id="modalEventEndDate" placeholder="如：2026-12-31" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 font-medium mb-1">活動限制 (可複選)</label>
+                        <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-150 text-xs">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalEventTags" value="登錄發票" onchange="syncEventTagsToDetail()" class="rounded text-blue-600">
+                                <span>登錄發票</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalEventTags" value="瓶蓋序號" onchange="syncEventTagsToDetail()" class="rounded text-blue-600">
+                                <span>瓶蓋序號</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalEventTags" value="罐底序號" onchange="syncEventTagsToDetail()" class="rounded text-blue-600">
+                                <span>罐底序號</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalEventTags" value="需回函" onchange="syncEventTagsToDetail()" class="rounded text-blue-600">
+                                <span>需回函</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalEventTags" value="需簡訊" onchange="syncEventTagsToDetail()" class="rounded text-blue-600">
+                                <span>需簡訊</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="modalEventTags" value="立即抽" onchange="syncEventTagsToDetail()" class="rounded text-blue-600">
+                                <span>立即抽</span>
+                            </label>
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs text-gray-400 font-medium mb-1">活動細節說明</label>
-                        <textarea id="modalEventDetail" rows="3" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"></textarea>
+                        <textarea id="modalEventDetail" rows="3" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="勾選上方標籤將會自動填入此處，您也可以在後方加註說明。"></textarea>
                     </div>
                 </div>
 
@@ -162,7 +185,7 @@
     </div>
 
     <script>
-        // 🛠&emsp;Supabase 設定
+        // 🛠 Supabase 設定
         const YOUR_SUPABASE_URL = "https://akxaulhkzlckkaxdthxo.supabase.co"; 
         const YOUR_SUPABASE_ANON_KEY = "sb_publishable_LP-Jf6ygyLe4rKNVeqS83A_E5jmMzw0";
 
@@ -384,14 +407,90 @@
             }).join('');
         }
 
+        // ==================== 🛠️ 標籤與備註欄位即時同步邏輯 ====================
+
+        // 飲料部分：當手動勾選核取方塊，即時重組並填入「其他備註說明」
+        function syncDrinkTagsToRemark() {
+            const checkboxes = document.querySelectorAll('input[name="modalDrinkTags"]');
+            const textInput = document.getElementById('modalDrinkRemark');
+            
+            // 收集已勾選的標籤
+            const selectedTags = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked) selectedTags.push(cb.value);
+            });
+
+            // 解析目前輸入框內的使用者自訂描述（排除舊有的標籤前綴）
+            let currentText = textInput.value.trim();
+            let customPart = "";
+
+            if (currentText.includes('|')) {
+                // 如果已有分割符，直接拿後半段自訂部分
+                customPart = currentText.split('|')[1].trim();
+            } else {
+                // 如果沒有分割符，看是否有非標籤的文字
+                let tempText = currentText;
+                checkboxes.forEach(cb => {
+                    tempText = tempText.replace(cb.value, "").replace(/[,，、|\s]/g, "");
+                });
+                if (tempText.length > 0) {
+                    customPart = currentText;
+                }
+            }
+
+            // 重組文字： 標籤, 標籤 | 自訂備註
+            let tagsText = selectedTags.join(',');
+            let finalText = tagsText;
+            if (customPart) {
+                finalText = tagsText ? `${tagsText} | ${customPart}` : customPart;
+            }
+            textInput.value = finalText;
+        }
+
+        // 活動部分：當手動勾選核取方塊，即時重組並填入「活動細節說明」
+        function syncEventTagsToDetail() {
+            const checkboxes = document.querySelectorAll('input[name="modalEventTags"]');
+            const textInput = document.getElementById('modalEventDetail');
+
+            const selectedTags = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked) selectedTags.push(cb.value);
+            });
+
+            let currentText = textInput.value.trim();
+            let customPart = "";
+
+            if (currentText.includes('|')) {
+                customPart = currentText.split('|')[1].trim();
+            } else {
+                let tempText = currentText;
+                checkboxes.forEach(cb => {
+                    tempText = tempText.replace(cb.value, "").replace(/[,，、|\s]/g, "");
+                });
+                if (tempText.length > 0) {
+                    customPart = currentText;
+                }
+            }
+
+            let tagsText = selectedTags.join(',');
+            let finalText = tagsText;
+            if (customPart) {
+                finalText = tagsText ? `${tagsText} | ${customPart}` : customPart;
+            }
+            textInput.value = finalText;
+        }
+
         // ==================== 彈窗手動編輯邏輯 ====================
         function openEditModal(type, id) {
             document.getElementById('editItemType').value = type;
             document.getElementById('editItemId').value = id;
 
-            // 清空飲料的所有 Checkbox 勾選狀態
-            const checkboxes = document.querySelectorAll('input[name="modalDrinkTags"]');
-            checkboxes.forEach(cb => cb.checked = false);
+            // 初始化與清空所有核取方塊
+            const drinkCheckboxes = document.querySelectorAll('input[name="modalDrinkTags"]');
+            drinkCheckboxes.forEach(cb => cb.checked = false);
+
+            const eventCheckboxes = document.querySelectorAll('input[name="modalEventTags"]');
+            eventCheckboxes.forEach(cb => cb.checked = false);
 
             document.getElementById('modalDrinkFields').classList.add('hidden');
             document.getElementById('modalEventFields').classList.add('hidden');
@@ -406,9 +505,10 @@
                 document.getElementById('modalDrinkPrice').value = item.price;
                 document.getElementById('modalDrinkRemark').value = item.remark || "";
 
-                // ✨ 解析既有備註，勾選對應的核取方塊
+                // ✨ 解析備註文字，自動打勾已存在的標籤
                 if (item.remark) {
-                    checkboxes.forEach(cb => {
+                    drinkCheckboxes.forEach(cb => {
+                        // 比對不分分隔符號（如逗號、頓號、豎線）
                         if (item.remark.includes(cb.value)) {
                             cb.checked = true;
                         }
@@ -422,9 +522,18 @@
 
                 document.getElementById('modalEventBrand').value = item.brand;
                 document.getElementById('modalEventUrl').value = item.url;
-                document.getElementById('modalEventStartDate').value = item.start_date || ""; // 補上開始日期
-                document.getElementById('modalEventEndDate').value = item.end_date || "";     // 補上截止日期
+                document.getElementById('modalEventStartDate').value = item.start_date || "";
+                document.getElementById('modalEventEndDate').value = item.end_date || "";
                 document.getElementById('modalEventDetail').value = item.detail || "";
+
+                // ✨ 解析活動細節，自動打勾已存在的活動限制標籤
+                if (item.detail) {
+                    eventCheckboxes.forEach(cb => {
+                        if (item.detail.includes(cb.value)) {
+                            cb.checked = true;
+                        }
+                    });
+                }
             }
 
             document.getElementById('editModal').classList.remove('hidden');
@@ -444,28 +553,17 @@
             const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
 
             if (type === 'drink') {
-                // ✨ 整合核取方塊與文字欄位
-                const selectedTags = [];
-                const checkboxes = document.querySelectorAll('input[name="modalDrinkTags"]:checked');
-                checkboxes.forEach(cb => selectedTags.push(cb.value));
-                
-                const customRemark = document.getElementById('modalDrinkRemark').value.trim();
-                let finalRemark = selectedTags.join('、');
-                if (customRemark) {
-                    finalRemark = finalRemark ? `${finalRemark} | ${customRemark}` : customRemark;
-                }
-
                 updatePayload = {
                     name: document.getElementById('modalDrinkName').value.trim(),
-                    price: parseInt(document.getElementById('modalDrinkPrice').value),
-                    remark: finalRemark
+                    price: parseInt(document.getElementById('modalDrinkPrice').value) || 0,
+                    remark: document.getElementById('modalDrinkRemark').value.trim()
                 };
             } else {
                 updatePayload = {
                     brand: document.getElementById('modalEventBrand').value.trim(),
                     url: document.getElementById('modalEventUrl').value.trim(),
-                    start_date: document.getElementById('modalEventStartDate').value.trim(), // 儲存開始日期
-                    end_date: document.getElementById('modalEventEndDate').value.trim(),     // 儲存截止日期
+                    start_date: document.getElementById('modalEventStartDate').value.trim(),
+                    end_date: document.getElementById('modalEventEndDate').value.trim(),
                     detail: document.getElementById('modalEventDetail').value.trim()
                 };
             }
@@ -534,8 +632,8 @@
                     overwritePayload = {
                         brand: report.event_brand ? report.event_brand.trim() : original.brand,
                         url: report.event_url ? report.event_url.trim() : original.url,
-                        start_date: report.event_start_date ? report.event_start_date.trim() : original.start_date, // 覆蓋開始日期
-                        end_date: report.event_end_date ? report.event_end_date.trim() : original.end_date,         // 覆蓋截止日期
+                        start_date: report.event_start_date ? report.event_start_date.trim() : original.start_date,
+                        end_date: report.event_end_date ? report.event_end_date.trim() : original.end_date,
                         detail: report.event_detail ? report.event_detail.trim() : original.detail
                     };
                 }
@@ -548,7 +646,7 @@
 
                 if (updateOriginalRes.error) throw updateOriginalRes.error;
 
-                // 2b. ✨ 修正：更新 `issue_reports` 的狀態，直接移除了 admin_name 欄位，排除 Schema cache 錯誤！
+                // 2b. 更新 `issue_reports` 的狀態
                 const updateReportRes = await supabaseClient
                     .from('issue_reports')
                     .update({ 
