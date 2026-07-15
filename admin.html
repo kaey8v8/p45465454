@@ -57,7 +57,6 @@
         const YOUR_SUPABASE_URL = "https://akxaulhkzlckkaxdthxo.supabase.co"; 
         const YOUR_SUPABASE_ANON_KEY = "sb_publishable_LP-Jf6ygyLe4rKNVeqS83A_E5jmMzw0";
 
-        // 修正：將變數名稱改為 supabaseClient，避免與 CDN 載入的 window.supabase 衝突
         const supabaseClient = supabase.createClient(YOUR_SUPABASE_URL, YOUR_SUPABASE_ANON_KEY);
         let currentPendingCount = 0;
 
@@ -71,7 +70,6 @@
                 return;
             }
 
-            // 自動幫忙補上假信箱後綴
             const fakeEmail = username.includes('@') ? username : `${username}@fakeadmin.com`;
 
             try {
@@ -99,15 +97,16 @@
             document.getElementById('adminPassword').value = "";
         }
 
-        // 載入待審清單
+        // 載入待審清單 (篩選出 status = 'pending' 的資料)
         async function loadPendingList() {
             const listContainer = document.getElementById('pendingList');
             listContainer.innerHTML = `<p class="text-sm text-gray-400 text-center py-4">正在從資料庫撈取待審資料...</p>`;
 
             try {
+                // 修正：向正確的表撈取 status 等於 pending 的資料
                 const [drinksRes, eventsRes] = await Promise.all([
-                    supabaseClient.from('pending_drinks').select('*').order('created_at', { ascending: true }),
-                    supabaseClient.from('pending_events').select('*').order('created_at', { ascending: true })
+                    supabaseClient.from('drink_submissions').select('*').eq('status', 'pending').order('created_at', { ascending: true }),
+                    supabaseClient.from('event_submissions').select('*').eq('status', 'pending').order('created_at', { ascending: true })
                 ]);
 
                 if (drinksRes.error) throw drinksRes.error;
@@ -136,7 +135,7 @@
 
             } catch (e) {
                 console.error(e);
-                listContainer.innerHTML = `<p class="text-xs text-red-500 text-center">載入失敗，請確認權限設定。</p>`;
+                listContainer.innerHTML = `<p class="text-xs text-red-500 text-center">載入失敗，請確認管理員 RLS 權限設定。</p>`;
             }
         }
 
@@ -175,7 +174,7 @@
                 <div class="space-y-1 py-1">${contentHtml}</div>
                 <div class="grid grid-cols-2 gap-2 pt-1">
                     <button onclick="reviewAction('${type}', ${id}, 'reject', '${cardId}')" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium py-2 rounded-lg transition border border-red-200">
-                        ❌ 拒減/刪除
+                        ❌ 拒絕/不通過
                     </button>
                     <button onclick="reviewAction('${type}', ${id}, 'approve', '${cardId}')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 rounded-lg transition shadow-xs">
                         ✅ 同意上架
@@ -185,45 +184,31 @@
             container.appendChild(card);
         }
 
-        // 審核核心動作
+        // 審核核心動作 (修正：改為更新原表的 status 狀態)
         async function reviewAction(type, id, action, cardElementId) {
-            const actionText = action === 'approve' ? '同意上架' : '拒絕並刪除';
+            const actionText = action === 'approve' ? '同意上架' : '拒絕';
             if (!confirm(`確定要${actionText}這筆資料嗎？`)) return;
 
-            const pendingTable = type === 'drink' ? 'pending_drinks' : 'pending_events';
-            const officialTable = type === 'drink' ? 'drinks' : 'events';
+            const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
+            const nextStatus = action === 'approve' ? 'approved' : 'rejected';
 
             try {
-                if (action === 'approve') {
-                    const { data: sourceData, error: fetchErr } = await supabaseClient
-                        .from(pendingTable)
-                        .select('*')
-                        .eq('id', id)
-                        .single();
+                // 獲取目前登入的管理員 Email 作為簽名
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                const adminEmail = user ? user.email : 'Admin';
 
-                    if (fetchErr) throw fetchErr;
-
-                    let insertData = {};
-                    if (type === 'drink') {
-                        insertData = { name: sourceData.name, price: sourceData.price, remark: sourceData.remark };
-                    } else {
-                        insertData = { brand: sourceData.brand, url: sourceData.url, end_date: sourceData.end_date, detail: sourceData.detail };
-                    }
-
-                    const { error: insertErr } = await supabaseClient
-                        .from(officialTable)
-                        .insert([insertData]);
-
-                    if (insertErr) throw insertErr;
-                }
-
-                const { error: deleteErr } = await supabaseClient
-                    .from(pendingTable)
-                    .delete()
+                // 直接更新該筆資料的狀態
+                const { error } = await supabaseClient
+                    .from(targetTable)
+                    .update({ 
+                        status: nextStatus,
+                        admin_name: adminEmail
+                    })
                     .eq('id', id);
 
-                if (deleteErr) throw deleteErr;
+                if (error) throw error;
 
+                // 移除 UI 上的卡片
                 const targetCard = document.getElementById(cardElementId);
                 if (targetCard) targetCard.remove();
 
@@ -238,7 +223,7 @@
 
             } catch (e) {
                 console.error(e);
-                alert(`操作失敗：${e.message || '請確認連線或權限設定'}`);
+                alert(`操作失敗：${e.message || '請確認管理員 RLS 更新權限'}`);
             }
         }
 
