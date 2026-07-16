@@ -252,38 +252,24 @@
                 const [drinksRes, eventsRes, reportsRes] = await Promise.all([
                     supabaseClient.from('drink_submissions').select('*').eq('status', 'approved').order('id', { ascending: false }),
                     supabaseClient.from('event_submissions').select('*').eq('status', 'approved').order('id', { ascending: false }),
-                    supabaseClient.from('issue_reports').select('*').eq('status', 'pending').order('created_at', { ascending: true }),
-                    // 新增：撈取待審核新增的資料
-                    supabaseClient.from('drink_submissions').select('*').eq('status', 'pending').order('created_at', { ascending: true }),
-                    supabaseClient.from('event_submissions').select('*').eq('status', 'pending').order('created_at', { ascending: true })
+                    supabaseClient.from('issue_reports').select('*').eq('status', 'pending').order('created_at', { ascending: true })
                 ]);
 
-        // 1. 錯誤處理
                 if (drinksRes.error) throw drinksRes.error;
                 if (eventsRes.error) throw eventsRes.error;
                 if (reportsRes.error) throw reportsRes.error;
-                if (pendingDrinksRes.error) throw pendingDrinksRes.error;
-                if (pendingEventsRes.error) throw pendingEventsRes.error;
 
-        // 2. 賦值資料
                 localDrinks = drinksRes.data || [];
                 localEvents = eventsRes.data || [];
                 localReports = reportsRes.data || [];
-                const pendingDrinks = pendingDrinksRes.data || [];
-                const pendingEvents = pendingEventsRes.data || [];
 
-        // 3. 更新介面狀態 (數量)
                 document.getElementById('countActiveDrinks').innerText = localDrinks.length;
                 document.getElementById('countActiveEvents').innerText = localEvents.length;
-                
-                // 更新右側待辦總數（勘誤 + 飲料新增提案 + 活動新增提案）
-                const totalPendingCount = localReports.length + pendingDrinks.length + pendingEvents.length;
-                document.getElementById('pendingCount').innerText = totalPendingCount;
-        
-                // 4. 渲染畫面
-                renderActiveLists(); // 渲染左側列表
-                renderCombinedPendingList(localReports, pendingDrinks, pendingEvents); // 渲染合併後的待辦清單
-        
+                document.getElementById('pendingCount').innerText = localReports.length;
+
+                renderActiveLists();
+                renderReportsList();
+
             } catch (e) {
                 console.error(e);
                 alert("撈取資料時出錯，請檢查權限設定！");
@@ -358,29 +344,6 @@
         }
 
         // 渲染右側使用者勘誤回報
-        function renderCombinedPendingList(reports, pDrinks, pEvents) {
-            const reportContainer = document.getElementById('reportListContainer');
-            let html = "";
-            
-            // 1. 渲染勘誤回報 (維持您原本的邏輯)
-            // 2. 渲染飲料新增提案
-            pDrinks.forEach(d => {
-                html += `<div class="p-3 bg-green-50 rounded-lg border border-green-200 mb-2">
-                    <p class="text-xs font-bold text-green-800">🍹 飲料提案：${d.name}</p>
-                    <button onclick="approveSubmission('drink_submissions', ${d.id})" class="text-xs text-green-700 underline">核可上架</button>
-                </div>`;
-            });
-        
-            // 3. 渲染活動新增提案
-            pEvents.forEach(e => {
-                html += `<div class="p-3 bg-blue-50 rounded-lg border border-blue-200 mb-2">
-                    <p class="text-xs font-bold text-blue-800">📅 活動提案：${e.brand}</p>
-                    <button onclick="approveSubmission('event_submissions', ${e.id})" class="text-xs text-blue-700 underline">核可上架</button>
-                </div>`;
-            });
-            
-            reportContainer.innerHTML = html || `<p class="text-sm text-green-600 text-center py-8">🎉 全部處理完畢！</p>`;
-        }
         function renderReportsList() {
             const reportContainer = document.getElementById('reportListContainer');
             if (localReports.length === 0) {
@@ -457,20 +420,7 @@
                 `;
             }).join('');
         }
-            //核可函式
-        async function approveSubmission(table, id) {
-            try {
-                const { error } = await supabaseClient
-                    .from(table)
-                    .update({ status: 'approved' })
-                    .eq('id', id);
-                if (error) throw error;
-                alert("核可成功！");
-                refreshAllData();
-            } catch (e) {
-                alert("操作失敗：" + e.message);
-            }
-        }
+
         
         // ====================刪除項目函式
         async function deleteItem(type, id) {
