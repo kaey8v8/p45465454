@@ -59,7 +59,7 @@
             <section class="lg:col-span-5 bg-white p-6 rounded-xl shadow-sm space-y-4">
                 <div class="border-b pb-3 flex justify-between items-center">
                     <div>
-                        <h2 class="text-lg font-bold text-gray-800">📥 綜合審核 </h2>
+                        <h2 class="text-lg font-bold text-gray-800">📥 綜合審核</h2>
                         <p class="text-xs text-gray-400">處理新增商品、活動與勘誤回報</p>
                     </div>
                     <!-- 統一的待審核總數 -->
@@ -199,7 +199,7 @@
         </div>
     </div>
 
-    <script>
+<script>
         // 🛠 Supabase 設定
         const YOUR_SUPABASE_URL = "https://akxaulhkzlckkaxdthxo.supabase.co"; 
         const YOUR_SUPABASE_ANON_KEY = "sb_publishable_LP-Jf6ygyLe4rKNVeqS83A_E5jmMzw0";
@@ -208,7 +208,7 @@
         
         let localDrinks = [];
         let localEvents = [];
-        let localReports = [];
+        let allPendingItems = []; // 存放融合後的綜合審核資料 (新投稿 + 勘誤)
         let currentTab = "drink";
 
         // 登入邏輯
@@ -252,14 +252,11 @@
             document.getElementById('logoutBtn').classList.remove('hidden');
             refreshAllData();
         }
-        
-// 全域變數，用來存放融合後的綜合審核資料
-        let allPendingItems = [];
 
         // 核心：刷新整頁所有資料（整合新投稿與勘誤回報）
         async function refreshAllData() {
             try {
-                // 維持原本的 3 個查詢，把新投稿（status='pending'）也一起撈回來
+                // 同時撈取飲料、活動（包含 pending 與 approved）與勘誤回報
                 const [drinksRes, eventsRes, reportsRes] = await Promise.all([
                     supabaseClient.from('drink_submissions').select('*').order('id', { ascending: false }),
                     supabaseClient.from('event_submissions').select('*').order('id', { ascending: false }),
@@ -274,49 +271,70 @@
                 const allEvents = eventsRes.data || [];
                 const localReports = reportsRes.data || [];
 
-                // 1. 過濾出左側需要的「已上架（approved）」資料
+                // 1. 左側看板只需要呈現「已上架（approved）」的資料
                 localDrinks = allDrinks.filter(d => d.status === 'approved');
                 localEvents = allEvents.filter(ev => ev.status === 'approved');
 
-                // 2. 過濾出右側綜合審核需要的「新投稿（pending）」資料，並加上 reviewType 標籤
+                // 2. 右側審核區塊需要呈現「新投稿（pending）」與「勘誤回報」
                 const pendingDrinks = allDrinks.filter(d => d.status === 'pending').map(item => ({ ...item, reviewType: 'newDrink' }));
                 const pendingEvents = allEvents.filter(ev => ev.status === 'pending').map(item => ({ ...item, reviewType: 'newEvent' }));
                 const parsedReports = localReports.map(item => ({ ...item, reviewType: 'report' }));
 
-                // 3. 將三種審核資料融合成一個陣列，並依時間由舊到新排序
+                // 3. 將這三種需要審核的資料融合，並按照時間排序
                 allPendingItems = [...parsedReports, ...pendingDrinks, ...pendingEvents].sort((a, b) => {
                     return new Date(a.created_at) - new Date(b.created_at);
                 });
 
-                // 更新左側看板的已上架總數
+                // 更新左側數字看板
                 if (document.getElementById('countActiveDrinks')) document.getElementById('countActiveDrinks').innerText = localDrinks.length;
                 if (document.getElementById('countActiveEvents')) document.getElementById('countActiveEvents').innerText = localEvents.length;
                 
-                // 更新右側統一的待處理總數
+                // 更新右側統一的待處理審核總數（相容 pendingCount 或 totalPendingCount）
                 const pendingCountEl = document.getElementById('pendingCount') || document.getElementById('totalPendingCount');
                 if (pendingCountEl) pendingCountEl.innerText = allPendingItems.length;
 
-                // 執行渲染（確保將資料庫變數傳入函式中）
-                renderActiveLists(localDrinks, localEvents);
-                renderUnifiedReviewList(localDrinks, localEvents); 
+                // 執行畫面渲染
+                renderActiveLists();
+                renderUnifiedReviewList();
 
             } catch (e) {
-                console.error("詳細錯誤資訊：", e);
-                alert(`撈取資料時出錯！\n原因: ${e.message || '請檢查資料庫 RLS 或主控台'}`);
+                console.error(e);
+                alert("撈取資料時出錯，請檢查權限設定！");
             }
         }
 
-        // 🛠️ 【手動補回】渲染左側前台已上架品項的函式
-        function renderActiveLists(drinks, events) {
+        // 切換左側頁籤 (飲料 / 活動)
+        function switchActiveTab(tab) {
+            currentTab = tab;
+            const tabDrink = document.getElementById('tabDrink');
+            const tabEvent = document.getElementById('tabEvent');
             const drinkContainer = document.getElementById('drinkListContainer');
             const eventContainer = document.getElementById('eventListContainer');
 
-            // 1. 渲染已上架飲料
+            if (tab === 'drink') {
+                tabDrink.className = "px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600";
+                tabEvent.className = "px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700";
+                drinkContainer.classList.remove('hidden');
+                eventContainer.classList.add('hidden');
+            } else {
+                tabDrink.className = "px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700";
+                tabEvent.className = "px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600";
+                drinkContainer.classList.add('hidden');
+                eventContainer.classList.remove('hidden');
+            }
+        }
+
+        // 渲染左側前台品項
+        function renderActiveLists() {
+            const drinkContainer = document.getElementById('drinkListContainer');
+            const eventContainer = document.getElementById('eventListContainer');
+
+            // 1. 飲料
             if (drinkContainer) {
-                if (drinks.length === 0) {
+                if (localDrinks.length === 0) {
                     drinkContainer.innerHTML = `<p class="text-xs text-gray-400 text-center py-6">目前前台無上架飲料品項</p>`;
                 } else {
-                    drinkContainer.innerHTML = drinks.map(d => `
+                    drinkContainer.innerHTML = localDrinks.map(d => `
                         <div class="p-3.5 bg-gray-50 rounded-lg border border-gray-150 flex justify-between items-center hover:bg-gray-100/70 transition">
                             <div>
                                 <div class="font-semibold text-gray-800 text-sm">${d.name} <span class="text-green-600 text-xs ml-1 font-bold">${d.price} 元</span></div>
@@ -335,12 +353,12 @@
                 }
             }
 
-            // 2. 渲染已上架活動
+            // 2. 活動
             if (eventContainer) {
-                if (events.length === 0) {
+                if (localEvents.length === 0) {
                     eventContainer.innerHTML = `<p class="text-xs text-gray-400 text-center py-6">目前前台無上架活動</p>`;
                 } else {
-                    eventContainer.innerHTML = events.map(ev => `
+                    eventContainer.innerHTML = localEvents.map(ev => `
                         <div class="p-3.5 bg-gray-50 rounded-lg border border-gray-150 flex justify-between items-center hover:bg-gray-100/70 transition">
                             <div class="flex-1 min-w-0 pr-4">
                                 <div class="font-semibold text-gray-800 text-sm truncate">${ev.brand}</div>
@@ -360,11 +378,11 @@
             }
         }
 
-        // 重新命名並重構右側審核區塊（融合勘誤、新商品、新活動）
-        function renderUnifiedReviewList(drinks, events) {
+        // 渲染右側綜合審核清單（融合勘誤回報、全新商品投稿、全新活動投稿）
+        function renderUnifiedReviewList() {
             const reportContainer = document.getElementById('reportListContainer');
             if (!reportContainer) return;
-            
+
             if (allPendingItems.length === 0) {
                 reportContainer.innerHTML = `<p class="text-sm text-green-600 text-center py-8 font-medium">🎉 目前沒有任何待處理項目！</p>`;
                 return;
@@ -373,16 +391,16 @@
             reportContainer.innerHTML = allPendingItems.map(item => {
                 const itemDate = item.created_at ? new Date(item.created_at).toLocaleString('zh-TW', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
-                // ---------- 類型 1：勘誤回報 ----------
+                // ---------- 1. 勘誤回報 ----------
                 if (item.reviewType === 'report') {
                     const targetTypeLabel = item.target_type === 'drink' ? '🍹 飲料勘誤' : '🎉 活動勘誤';
                     
                     let originalContent = "查無或已被刪除";
                     if (item.target_type === 'drink') {
-                        const matched = drinks.find(d => d.id === item.target_id);
+                        const matched = localDrinks.find(d => d.id === item.target_id);
                         if (matched) originalContent = `名稱: ${matched.name} (${matched.price}元) / ${matched.remark || '無'}`;
                     } else {
-                        const matched = events.find(ev => ev.id === item.target_id);
+                        const matched = localEvents.find(ev => ev.id === item.target_id);
                         if (matched) originalContent = `品牌: ${matched.brand} / 時間: ${matched.start_date || '未填'} ~ ${matched.end_date || '未填'}`;
                     }
 
@@ -437,7 +455,7 @@
                         </div>
                     `;
 
-                // ---------- 類型 2：全新商品投稿 ----------
+                // ---------- 2. 全新商品投稿 ----------
                 } else if (item.reviewType === 'newDrink') {
                     return `
                         <div class="p-4 bg-green-50/50 rounded-xl border border-green-200 space-y-3 shadow-xs">
@@ -463,7 +481,7 @@
                         </div>
                     `;
 
-                // ---------- 類型 3：全新活動投稿 ----------
+                // ---------- 3. 全新活動投稿 ----------
                 } else if (item.reviewType === 'newEvent') {
                     return `
                         <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-200 space-y-3 shadow-xs">
@@ -483,7 +501,7 @@
                                 <button onclick="rejectSubmission('event', ${item.id})" class="bg-white hover:bg-gray-100 text-gray-600 text-xs font-medium py-1.5 rounded-lg border border-gray-200 transition">
                                     ❌ 拒絕刪除
                                 </button>
-                                <button onclick="approveSubmission('event', ${item.id})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-1.5 rounded-lg shadow-sm transition">
+                                <button onclick="approveSubmission('event', ${item.id})" class="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-1.5 rounded-lg shadow-sm transition">
                                     🉐 核可上架
                                 </button>
                             </div>
@@ -493,7 +511,22 @@
             }).join('');
         }
 
-        // ==================== 審核動作功能 ====================
+        // ==================== 刪除項目功能 ====================
+        async function deleteItem(type, id) {
+            if (!confirm("確定要徹底刪除此項目嗎？此操作無法復原。")) return;
+            const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
+            try {
+                const { error } = await supabaseClient.from(targetTable).delete().eq('id', id);
+                if (error) throw error;
+                alert("刪除成功！");
+                refreshAllData();
+            } catch (e) {
+                console.error(e);
+                alert("刪除失敗：" + e.message);
+            }
+        }
+
+        // ==================== 全新投稿審核功能（補回丟失的函式） ====================
         async function approveSubmission(type, id) {
             if (!confirm(`確認要核可這筆新${type === 'drink' ? '飲料' : '活動'}並發布到前台嗎？`)) return;
             const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
@@ -515,31 +548,8 @@
                 refreshAllData();
             } catch (e) { alert("操作失敗：" + e.message); }
         }
-        
-        // ====================刪除項目函式
-        async function deleteItem(type, id) {
-            if (!confirm("確定要徹底刪除此項目嗎？此操作無法復原。")) return;
-        
-            const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
-            
-            try {
-                const { error } = await supabaseClient
-                    .from(targetTable)
-                    .delete()
-                    .eq('id', id);
-        
-                if (error) throw error;
-        
-                alert("刪除成功！");
-                refreshAllData(); // 重新整理列表
-            } catch (e) {
-                console.error(e);
-                alert("刪除失敗：" + e.message);
-            }
-        }
-        // ==================== 🛠️ 標籤視覺化與文字同步邏輯 ====================
 
-        // 移除單一飲料標籤（點擊 Tag 上的 ✕）
+        // ==================== 🛠️ 標籤視覺化與文字同步邏輯 ====================
         function removeDrinkTag(tagValue) {
             const checkbox = document.querySelector(`input[name="modalDrinkTags"][value="${tagValue}"]`);
             if (checkbox) {
@@ -548,7 +558,6 @@
             }
         }
 
-        // 移除單一活動標籤（點擊 Tag 上的 ✕）
         function removeEventTag(tagValue) {
             const checkbox = document.querySelector(`input[name="modalEventTags"][value="${tagValue}"]`);
             if (checkbox) {
@@ -557,18 +566,14 @@
             }
         }
 
-        // 🍹 飲料同步：更新橢圓形 Tag 視覺 preview 並與 textarea 內建文字作同步
         function syncDrinkTags() {
             const checkboxes = document.querySelectorAll('input[name="modalDrinkTags"]');
             const tagContainer = document.getElementById('drinkTagContainer');
             const textInput = document.getElementById('modalDrinkRemark');
             
             const selectedTags = [];
-            checkboxes.forEach(cb => {
-                if (cb.checked) selectedTags.push(cb.value);
-            });
+            checkboxes.forEach(cb => { if (cb.checked) selectedTags.push(cb.value); });
 
-            // 1. 渲染漂亮的橢圓形 Tag 視覺模組
             if (selectedTags.length === 0) {
                 tagContainer.innerHTML = `<span class="text-xs text-gray-400 italic">尚未勾選任何標籤...</span>`;
             } else {
@@ -580,45 +585,32 @@
                 `).join('');
             }
 
-            // 2. 解析與同步資料文字
             let currentText = textInput.value.trim();
             let customPart = "";
-
             if (currentText.includes('|')) {
                 customPart = currentText.split('|')[1].trim();
             } else {
                 let tempText = currentText;
-                checkboxes.forEach(cb => {
-                    // 清理暫存，只保留除了標籤以外的手動自訂文字
-                    tempText = tempText.replace(cb.value, "").replace(/[,，、|\s]/g, "");
-                });
-                if (tempText.length > 0) {
-                    customPart = currentText;
-                }
+                checkboxes.forEach(cb => { tempText = tempText.replace(cb.value, "").replace(/[,，、|\s]/g, ""); });
+                if (tempText.length > 0) customPart = currentText;
             }
 
             let tagsText = selectedTags.join(',');
             let finalText = tagsText;
-            if (customPart) {
-                finalText = tagsText ? `${tagsText} | ${customPart}` : customPart;
-            }
+            if (customPart) finalText = tagsText ? `${tagsText} | ${customPart}` : customPart;
             textInput.value = finalText;
         }
 
-        // 🎉 活動同步：更新橢圓形 Tag 視覺 preview 並與 textarea 內建文字作同步
         function syncEventTags() {
             const checkboxes = document.querySelectorAll('input[name="modalEventTags"]');
             const tagContainer = document.getElementById('eventTagContainer');
             const textInput = document.getElementById('modalEventDetail');
 
             const selectedTags = [];
-            checkboxes.forEach(cb => {
-                if (cb.checked) selectedTags.push(cb.value);
-            });
+            checkboxes.forEach(cb => { if (cb.checked) selectedTags.push(cb.value); });
 
-            // 1. 渲染漂亮的橢圓形 Tag 視覺模組
             if (selectedTags.length === 0) {
-                tagContainer.innerHTML = `<span class="text-xs text-gray-400 italic">尚未勾選任何標籤...</span>`;
+                tagContainer.innerHTML = `<span class="text-xs text-gray-400 italic">尚未勾選 any 標籤...</span>`;
             } else {
                 tagContainer.innerHTML = selectedTags.map(tag => `
                     <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-1 rounded-full border border-amber-200">
@@ -628,27 +620,19 @@
                 `).join('');
             }
 
-            // 2. 解析與同步資料文字
             let currentText = textInput.value.trim();
             let customPart = "";
-
             if (currentText.includes('|')) {
                 customPart = currentText.split('|')[1].trim();
             } else {
                 let tempText = currentText;
-                checkboxes.forEach(cb => {
-                    tempText = tempText.replace(cb.value, "").replace(/[,，、|\s]/g, "");
-                });
-                if (tempText.length > 0) {
-                    customPart = currentText;
-                }
+                checkboxes.forEach(cb => { tempText = tempText.replace(cb.value, "").replace(/[,，、|\s]/g, ""); });
+                if (tempText.length > 0) customPart = currentText;
             }
 
             let tagsText = selectedTags.join(',');
             let finalText = tagsText;
-            if (customPart) {
-                finalText = tagsText ? `${tagsText} | ${customPart}` : customPart;
-            }
+            if (customPart) finalText = tagsText ? `${tagsText} | ${customPart}` : customPart;
             textInput.value = finalText;
         }
 
@@ -657,7 +641,6 @@
             document.getElementById('editItemType').value = type;
             document.getElementById('editItemId').value = id;
 
-            // 初始化與清空所有核取方塊
             const drinkCheckboxes = document.querySelectorAll('input[name="modalDrinkTags"]');
             drinkCheckboxes.forEach(cb => cb.checked = false);
 
@@ -677,15 +660,10 @@
                 document.getElementById('modalDrinkPrice').value = item.price;
                 document.getElementById('modalDrinkRemark').value = item.remark || "";
 
-                // 解析備註文字，自動打勾並觸發渲染圓形 Tag
                 if (item.remark) {
-                    drinkCheckboxes.forEach(cb => {
-                        if (item.remark.includes(cb.value)) {
-                            cb.checked = true;
-                        }
-                    });
+                    drinkCheckboxes.forEach(cb => { if (item.remark.includes(cb.value)) cb.checked = true; });
                 }
-                syncDrinkTags(); // 即時生成漂亮的 Tag
+                syncDrinkTags();
             } else {
                 const item = localEvents.find(ev => ev.id === id);
                 if (!item) return;
@@ -698,15 +676,10 @@
                 document.getElementById('modalEventEndDate').value = item.end_date || "";
                 document.getElementById('modalEventDetail').value = item.detail || "";
 
-                // 解析活動細節，自動打勾並觸發渲染圓形 Tag
                 if (item.detail) {
-                    eventCheckboxes.forEach(cb => {
-                        if (item.detail.includes(cb.value)) {
-                            cb.checked = true;
-                        }
-                    });
+                    eventCheckboxes.forEach(cb => { if (item.detail.includes(cb.value)) cb.checked = true; });
                 }
-                syncEventTags(); // 即時生成漂亮的 Tag
+                syncEventTags();
             }
 
             document.getElementById('editModal').classList.remove('hidden');
@@ -717,7 +690,6 @@
             document.getElementById('editForm').reset();
         }
 
-        // 手動編輯儲存提交
         async function saveEdit() {
             const type = document.getElementById('editItemType').value;
             const id = parseInt(document.getElementById('editItemId').value);
@@ -742,17 +714,12 @@
             }
 
             try {
-                const { error } = await supabaseClient
-                    .from(targetTable)
-                    .update(updatePayload)
-                    .eq('id', id);
-
+                const { error } = await supabaseClient.from(targetTable).update(updatePayload).eq('id', id);
                 if (error) throw error;
 
                 closeModal();
                 alert("修改成功！已更新回前台資料。");
                 refreshAllData();
-
             } catch (e) {
                 console.error(e);
                 alert("儲存失敗：" + e.message);
@@ -760,16 +727,10 @@
         }
 
         // ==================== 右側使用者回報處理邏輯 ====================
-
-        // 1. 忽略回報
         async function ignoreReport(reportId) {
             if (!confirm("確定要忽略這筆勘誤回報嗎？原資料將不做變更。")) return;
             try {
-                const { error } = await supabaseClient
-                    .from('issue_reports')
-                    .update({ status: 'rejected' })
-                    .eq('id', reportId);
-
+                const { error } = await supabaseClient.from('issue_reports').update({ status: 'rejected' }).eq('id', reportId);
                 if (error) throw error;
                 alert("已忽略此回報。");
                 refreshAllData();
@@ -779,9 +740,9 @@
             }
         }
 
-        // 2. ⚡ 確認覆蓋原始資料
         async function overwriteAndApprove(reportId) {
-            const report = localReports.find(rep => rep.id === reportId);
+            // 從融合陣列中撈取該筆回報詳細內容
+            const report = allPendingItems.find(rep => rep.id === reportId && rep.reviewType === 'report');
             if (!report) return;
 
             const targetId = report.target_id;
@@ -811,27 +772,14 @@
                     };
                 }
 
-                // 更新原資料庫
-                const updateOriginalRes = await supabaseClient
-                    .from(targetTable)
-                    .update(overwritePayload)
-                    .eq('id', targetId);
-
+                const updateOriginalRes = await supabaseClient.from(targetTable).update(overwritePayload).eq('id', targetId);
                 if (updateOriginalRes.error) throw updateOriginalRes.error;
 
-                // 更新 `issue_reports` 的狀態
-                const updateReportRes = await supabaseClient
-                    .from('issue_reports')
-                    .update({ 
-                        status: 'approved'
-                    })
-                    .eq('id', reportId);
-
+                const updateReportRes = await supabaseClient.from('issue_reports').update({ status: 'approved' }).eq('id', reportId);
                 if (updateReportRes.error) throw updateReportRes.error;
 
                 alert("⚡ 覆蓋更新成功！原資料與審核狀態已全數同步完畢。");
                 refreshAllData();
-
             } catch (e) {
                 console.error(e);
                 alert("覆蓋失敗：" + e.message);
