@@ -32,15 +32,19 @@
                 <button id="viewTabEvent" onclick="globalSwitch('event')" class="flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition">
                     🎁 品牌抽獎活動
                 </button>
+                <!-- 🌟 新增：等待審核清單分頁按鈕 -->
+                <button id="viewTabPending" onclick="globalSwitch('pending')" class="flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition">
+                    📝 待審名單
+                </button>
             </div>
 
             <div class="p-4 sm:p-6 space-y-4">
-                <!-- 搜尋與新增按鈕列 (已將摺疊按鈕嵌入兩者中間) -->
-                <div class="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
+                <!-- 搜尋與新增按鈕列 -->
+                <div id="searchBarControls" class="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
                     <input type="text" id="searchInput" placeholder="輸入關鍵字搜尋..." 
                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
                     
-                    <!-- 🌟 摺疊篩選與排序控制按鈕 (嵌入搜尋與新增按鈕中間) -->
+                    <!-- 🌟 摺疊篩選與排序控制按鈕 -->
                     <div id="filterToggleWrapper" class="flex items-center gap-2">
                         <!-- 飲料分頁專用：篩選與排序摺疊按鈕 -->
                         <button id="toggleFilterBtn" onclick="toggleCollapseFilter()" class="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-2 rounded-lg transition border border-gray-200 shadow-xs whitespace-nowrap">
@@ -48,7 +52,7 @@
                             <span id="toggleArrow" class="text-[10px] transition-transform duration-200">▼</span>
                         </button>
 
-                        <!-- 活動分頁專用：直接外露的排序選擇器 (免摺疊) -->
+                        <!-- 活動分頁專用：直接外露的排序選擇器 -->
                         <div id="eventSortContainer" class="hidden flex items-center gap-1.5">
                             <span class="text-xs text-gray-500 font-bold">⇅ 排序:</span>
                             <button id="sortEventDateBtn" onclick="toggleEventDateSort(this)" class="px-3 py-1.5 border border-gray-200 bg-white text-gray-700 hover:bg-gray-100 text-xs font-semibold rounded-lg transition flex items-center gap-1">
@@ -62,7 +66,7 @@
                     </button>
                 </div>
 
-                <!-- 🌟 飲料分類、糖分與排序 摺疊容器 (預設隱藏 h-0 overflow-hidden) -->
+                <!-- 🌟 飲料分類、糖分與排序 摺疊容器 -->
                 <div id="drinkCollapseFilterContainer" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out bg-gray-50 rounded-xl border-0 border-transparent">
                     <div class="p-4 space-y-4 text-left">
                         <!-- 飲料大類 -->
@@ -93,11 +97,9 @@
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold text-gray-500">⇅ 排序:</span>
                                 <div class="flex flex-wrap gap-1.5">
-                                    <!-- 飲料價格動態按鈕 -->
                                     <button id="sortPriceBtn" onclick="togglePriceSort(this)" class="drink-sort-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition flex items-center gap-1">
                                         <span>價格 ⇅</span>
                                     </button>
-                                    <!-- 飲料更新日期動態按鈕 -->
                                     <button id="sortDateBtn" onclick="toggleDateSort(this)" class="drink-sort-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition flex items-center gap-1">
                                         <span>更新日期 ⇅</span>
                                     </button>
@@ -119,6 +121,26 @@
                 <div id="eventViewSection" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 hidden">
                     <p class="col-span-full text-xs text-gray-400 text-center py-4">資料同步中...</p>
                 </div>
+
+                <!-- 🌟 新增：等待審核清單看板內容 (Table 表格排版) -->
+                <div id="pendingViewSection" class="hidden overflow-x-auto border border-gray-200 rounded-xl">
+                    <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 font-semibold text-gray-500">建立時間</th>
+                                <th scope="col" class="px-4 py-3 font-semibold text-gray-500">品名 / 品牌</th>
+                                <th scope="col" class="px-4 py-3 font-semibold text-gray-500">更新項目 / 詳情</th>
+                                <th scope="col" class="px-4 py-3 font-semibold text-gray-500">署名</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingTableBody" class="divide-y divide-gray-200 bg-white">
+                            <tr>
+                                <td colspan="4" class="px-4 py-8 text-center text-gray-400">資料同步中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </section>
     </main>
@@ -331,9 +353,9 @@
         
         let allDrinks = [];
         let allEvents = [];
+        let pendingList = []; // 🌟 新增：存放所有 pending 狀態的待審資料
         let currentView = 'drink';
         
-        // 🌟 記錄當前被選取的商品分類膠囊標籤與排序條件
         let selectedDrinkTags = [];
         let selectedDrinkSortMode = ''; // 'price_desc', 'price_asc', 'date_asc', 'date_desc'
 
@@ -352,6 +374,7 @@
 
         async function initData() {
             try {
+                // 原有 approved 資料抓取
                 const [drinkRes, eventRes] = await Promise.all([
                     supabaseClient.from('drink_submissions').select('*').eq('status', 'approved'),
                     supabaseClient.from('event_submissions').select('*').eq('status', 'approved')
@@ -360,18 +383,66 @@
                 allDrinks = drinkRes.data || [];
                 allEvents = eventRes.data || [];
 
+                // 🌟 新增：獲取狀態為 pending 的飲料、活動與勘誤回報
+                await fetchPendingData();
+
                 filterAndRender();
             } catch (e) {
                 console.error(e);
             }
         }
 
-        // 🌟 摺疊開關控制
+        // 🌟 新增：拉取所有狀態為 pending 的資料並進行格式統一
+        async function fetchPendingData() {
+            try {
+                const [drinkPend, eventPend, issuePend] = await Promise.all([
+                    supabaseClient.from('drink_submissions').select('*').eq('status', 'pending'),
+                    supabaseClient.from('event_submissions').select('*').eq('status', 'pending'),
+                    supabaseClient.from('issue_reports').select('*').eq('status', 'pending')
+                ]);
+
+                const drinks = (drinkPend.data || []).map(item => ({
+                    created_at: item.created_at,
+                    name: `🥤 [新增飲料] ${item.name}`,
+                    details: `價格：${item.price} 元 | 類別：${item.category_tags || '無'} | 備註：${item.remark || '無'}`,
+                    user_name: item.user_name || '匿名'
+                }));
+
+                const events = (eventPend.data || []).map(item => ({
+                    created_at: item.created_at,
+                    name: `🎁 [新增活動] ${item.brand}`,
+                    details: `網址：${item.url} | 日期：${item.start_date || '即日'} ~ ${item.end_date} | 內容：${item.detail || '無'}`,
+                    user_name: item.user_name || '匿名'
+                }));
+
+                const issues = (issuePend.data || []).map(item => {
+                    const isDrink = item.target_type === 'drink';
+                    const nameLabel = isDrink 
+                        ? `🚨 [勘誤飲料] (ID: ${item.target_id}) ${item.drink_name || ''}` 
+                        : `🚨 [勘誤活動] (ID: ${item.target_id}) ${item.event_brand || ''}`;
+                    const detailLabel = isDrink
+                        ? `修正價格：${item.drink_price || '無'} | 類別：${item.drink_category_tags || '無'} | 備註：${item.drink_remark || '無'}`
+                        : `修正網址：${item.event_url || '無'} | 截止：${item.event_end_date || '無'} | 細節：${item.event_detail || '無'}`;
+                    return {
+                        created_at: item.created_at,
+                        name: nameLabel,
+                        details: detailLabel,
+                        user_name: '系統回報 (匿名)'
+                    };
+                });
+
+                // 將三者合併，並按照建立時間從新到舊排序
+                pendingList = [...drinks, ...events, ...issues].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            } catch (error) {
+                console.error("無法載入待審資料: ", error);
+            }
+        }
+
         function toggleCollapseFilter() {
             const container = document.getElementById('drinkCollapseFilterContainer');
             const arrow = document.getElementById('toggleArrow');
             if (container.style.maxHeight === '0px' || !container.style.maxHeight) {
-                container.style.maxHeight = '500px'; // 給一個足夠展開的高度
+                container.style.maxHeight = '500px'; 
                 container.classList.add('border', 'border-gray-200', 'mt-2');
                 arrow.style.transform = 'rotate(180deg)';
             } else {
@@ -383,30 +454,26 @@
             }
         }
 
-        // 🌟 記錄當前的狀態（預設為空）
-        let priceDirection = ''; // 'asc' (低到高) 或 'desc' (高到低)
-        let dateDirection = '';  // 'asc' (遠到近) 或 'desc' (近到遠)
-        let eventDateDirection = 'near'; // 'near' (近到遠) 或 'far' (遠到近)，活動預設截止日近到遠
+        let priceDirection = ''; 
+        let dateDirection = '';  
+        let eventDateDirection = 'near'; 
         
-        // 1. 飲料價格排序切換
         function togglePriceSort(btnElement) {
-            // 先重設日期的狀態與按鈕樣式
             dateDirection = '';
             document.getElementById('sortDateBtn').className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition";
             document.getElementById('sortDateBtn').innerHTML = "<span>更新日期 ⇅</span>";
         
-            // 切換價格狀態
             if (priceDirection === '') {
-                priceDirection = 'desc'; // 預設第一次點擊：高到低
+                priceDirection = 'desc'; 
                 selectedDrinkSortMode = 'price_desc';
                 btnElement.innerHTML = "<span>價格 高→低 ⬇️</span>";
                 btnElement.className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-green-600 bg-green-600 text-white font-semibold hover:bg-green-700 transition";
             } else if (priceDirection === 'desc') {
-                priceDirection = 'asc'; // 第二次點擊：低到高
+                priceDirection = 'asc'; 
                 selectedDrinkSortMode = 'price_asc';
                 btnElement.innerHTML = "<span>價格 低→高 ⬆️</span>";
             } else {
-                priceDirection = ''; // 第三次點擊：取消排序
+                priceDirection = ''; 
                 selectedDrinkSortMode = '';
                 btnElement.innerHTML = "<span>價格 ⇅</span>";
                 btnElement.className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition";
@@ -414,25 +481,22 @@
             filterAndRender();
         }
         
-        // 2. 飲料更新日期排序切換
         function toggleDateSort(btnElement) {
-            // 先重設價格的狀態與按鈕樣式
             priceDirection = '';
             document.getElementById('sortPriceBtn').className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition";
             document.getElementById('sortPriceBtn').innerHTML = "<span>價格 ⇅</span>";
         
-            // 切換日期狀態
             if (dateDirection === '') {
-                dateDirection = 'desc'; // 預設第一次點擊：近到遠
+                dateDirection = 'desc'; 
                 selectedDrinkSortMode = 'date_desc';
                 btnElement.innerHTML = "<span>日期 新→舊 ⬇️</span>";
                 btnElement.className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-green-600 bg-green-600 text-white font-semibold hover:bg-green-700 transition";
             } else if (dateDirection === 'desc') {
-                dateDirection = 'asc'; // 第二次點擊：遠到近
+                dateDirection = 'asc'; 
                 selectedDrinkSortMode = 'date_asc';
                 btnElement.innerHTML = "<span>日期 舊→新 ⬆️</span>";
             } else {
-                dateDirection = ''; // 第三次點擊：取消排序
+                dateDirection = ''; 
                 selectedDrinkSortMode = '';
                 btnElement.innerHTML = "<span>更新日期 ⇅</span>";
                 btnElement.className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition";
@@ -440,7 +504,6 @@
             filterAndRender();
         }
         
-        // 3. 活動截止日期排序切換 (免摺疊外露按鈕)
         function toggleEventDateSort(btnElement) {
             if (eventDateDirection === 'near') {
                 eventDateDirection = 'far';
@@ -454,14 +517,12 @@
             filterAndRender();
         }
 
-        // 🌟 整合「關鍵字搜尋」、「分類標籤膠囊（多選 AND 交集）」與「排序」的過濾核心
         function filterAndRender() {
             const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
 
             if (currentView === 'drink') {
                 let filtered = [...allDrinks];
 
-                // 1. 膠囊多選過濾 (AND 交集邏輯)
                 if (selectedDrinkTags.length > 0) {
                     filtered = filtered.filter(item => {
                         const searchTarget = `${item.name} ${item.category_tags || ''} ${item.remark || ''}`.toLowerCase();
@@ -469,7 +530,6 @@
                     });
                 }
 
-                // 2. 關鍵字過濾
                 if (keyword) {
                     filtered = filtered.filter(item => 
                         item.name.toLowerCase().includes(keyword) || 
@@ -479,7 +539,6 @@
                     );
                 }
 
-                // 3. 排序邏輯
                 if (selectedDrinkSortMode === 'price_desc') {
                     filtered.sort((a, b) => b.price - a.price);
                 } else if (selectedDrinkSortMode === 'price_asc') {
@@ -489,12 +548,11 @@
                 } else if (selectedDrinkSortMode === 'date_desc') {
                     filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                 } else {
-                    // 預設降序排列 (新到舊)
                     filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                 }
 
                 renderDrinks(filtered);
-            } else {
+            } else if (currentView === 'event') {
                 let filtered = [...allEvents];
                 if (keyword) {
                     filtered = filtered.filter(item => 
@@ -503,23 +561,27 @@
                     );
                 }
 
-                // 活動分頁專屬排序
                 filtered.sort((a, b) => {
-                  const dateA = a.end_date ? new Date(a.end_date) : new Date('9999-12-31');
-                  const dateB = b.end_date ? new Date(b.end_date) : new Date('9999-12-31');
-                  // 使用新的變數進行雙向排序判斷
-                  if (eventDateDirection === 'near') {
-                      return dateA - dateB;
-                  } else {
-                      return dateB - dateA;
-                  }
-              });
+                    const dateA = a.end_date ? new Date(a.end_date) : new Date('9999-12-31');
+                    const dateB = b.end_date ? new Date(b.end_date) : new Date('9999-12-31');
+                    return eventDateDirection === 'near' ? dateA - dateB : dateB - dateA;
+                });
 
                 renderEvents(filtered);
+            } else {
+                // 🌟 待審名單過濾
+                let filtered = [...pendingList];
+                if (keyword) {
+                    filtered = filtered.filter(item => 
+                        item.name.toLowerCase().includes(keyword) || 
+                        item.details.toLowerCase().includes(keyword) || 
+                        item.user_name.toLowerCase().includes(keyword)
+                    );
+                }
+                renderPending(filtered);
             }
         }
 
-// 渲染商品查詢 (全 SVG 極簡極輕量版)
         function renderDrinks(data) {
             const container = document.getElementById('drinkViewSection');
             if (data.length === 0) {
@@ -548,14 +610,12 @@
                     }
                 }
 
-                // 右側底部署名
                 const authorHTML = item.user_name 
                     ? `<span class="text-[10px] text-gray-400 font-normal truncate max-w-[48px]" title="${item.user_name}">${item.user_name}</span>`
                     : `<span class="text-[10px] text-gray-300 font-normal italic">匿名</span>`;
 
                 return `
                     <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 flex justify-between gap-3 hover:bg-gray-100/70 transition shadow-xs text-left relative">
-                      <!-- 左側內容區 -->
                       <div class="flex-1 min-w-0 space-y-1.5">
                           <div class="font-bold text-gray-800 text-sm flex justify-between items-start gap-2">
                               <div class="flex items-center flex-wrap gap-1.5 flex-1 min-w-0">
@@ -569,10 +629,7 @@
                               ${cleanRemark}
                           </div>
                       </div>
-                      
-                      <!-- 右側控制行 (警示燈與署名) -->
                       <div class="flex flex-col items-center justify-between shrink-0 w-11 text-center py-0.5">
-                          <!-- 自訂極簡 SVG 警示燈按鈕 -->
                           <button onclick="openIssueModal('drink', ${item.id})" 
                                   class="text-red-500 hover:text-red-600 hover:scale-110 active:scale-95 transition-all p-1 cursor-pointer" 
                                   title="資訊勘誤 🚨">
@@ -582,8 +639,6 @@
                                   <rect x="3" y="16" width="18" height="3" rx="1" fill="currentColor" fill-opacity="0.2" />
                               </svg>
                           </button>
-                          
-                          <!-- 署名移至右下角 -->
                           ${authorHTML}
                       </div>
                   </div>
@@ -591,7 +646,6 @@
           }).join('');
         }
 
-        // 渲染品牌活動看板 (全 SVG 極簡極輕量版)
         function renderEvents(data) {
             const container = document.getElementById('eventViewSection');
             if (data.length === 0) {
@@ -615,12 +669,10 @@
                     }
                 }
 
-                // 右側底部署名
                 const authorHTML = item.user_name 
                     ? `<span class="text-[10px] text-gray-400 font-normal truncate max-w-[48px]" title="${item.user_name}">${item.user_name}</span>`
                     : `<span class="text-[10px] text-gray-300 font-normal italic">匿名</span>`;
 
-                // 外部官網連結 SVG (加強顯眼度與新圖示)
                 const linkHTML = item.url 
                     ? `<a href="${item.url}" target="_blank" class="text-xs text-blue-600 hover:text-blue-800 hover:underline shrink-0 font-bold flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 transition">
                         <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -633,13 +685,11 @@
 
                 return `
                     <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 flex justify-between gap-3 hover:bg-gray-100/70 transition shadow-xs text-left relative">
-                      <!-- 左側內容區 -->
                       <div class="flex-1 min-w-0 space-y-1.5">
                           <div class="font-bold text-gray-800 text-sm truncate flex justify-between items-center">
                               <span class="truncate">【${item.brand}】</span>
                               ${linkHTML}
                           </div>
-                          <!-- 行事曆 SVG -->
                           <div class="text-[11px] text-gray-400 font-medium flex items-center gap-1">
                               <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -654,10 +704,7 @@
                               ${cleanDetail}
                           </div>
                       </div>
-                      
-                      <!-- 右側控制行 (警示燈與署名) -->
                       <div class="flex flex-col items-center justify-between shrink-0 w-11 text-center py-0.5">
-                          <!-- 自訂極簡 SVG 警示燈按鈕 -->
                           <button onclick="openIssueModal('event', ${item.id})" 
                                   class="text-red-500 hover:text-red-600 hover:scale-110 active:scale-95 transition-all p-1 cursor-pointer" 
                                   title="資訊勘誤 🚨">
@@ -667,8 +714,6 @@
                                   <rect x="3" y="16" width="18" height="3" rx="1" fill="currentColor" fill-opacity="0.2" />
                               </svg>
                           </button>
-                          
-                          <!-- 署名移至右下角 -->
                           ${authorHTML}
                       </div>
                   </div>
@@ -676,16 +721,41 @@
           }).join('');
         }
 
-        // 🌟 膠囊標籤切換選取狀態 (選中變綠底白字)
+        // 🌟 新增：渲染待審核清單內容的 Table 函式
+        function renderPending(data) {
+            const tableBody = document.getElementById('pendingTableBody');
+            if (data.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-4 py-8 text-center text-gray-400">目前沒有等待審核的新情報或勘誤資料</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tableBody.innerHTML = data.map(item => {
+                // 格式化建立時間
+                const dateObj = new Date(item.created_at);
+                const timeString = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+                
+                return `
+                    <tr class="hover:bg-gray-50/50 transition">
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-400 font-mono">${timeString}</td>
+                        <td class="px-4 py-3 font-semibold text-gray-800 break-words max-w-[200px]">${item.name}</td>
+                        <td class="px-4 py-3 text-gray-600 break-words max-w-sm md:max-w-md">${item.details}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-500 font-medium">${item.user_name}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         function toggleFilterTag(btnElement, tag) {
             const index = selectedDrinkTags.indexOf(tag);
             
             if (index > -1) {
-                // 已選取 -> 取消
                 selectedDrinkTags.splice(index, 1);
                 btnElement.className = "drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition";
             } else {
-                // 未選取 -> 啟用
                 selectedDrinkTags.push(tag);
                 btnElement.className = "drink-tag-btn px-3 py-1 text-xs rounded-full border border-green-600 bg-green-600 text-white font-semibold hover:bg-green-700 transition";
             }
@@ -693,44 +763,45 @@
             filterAndRender();
         }
 
-        // 🌟 清空所有選取的膠囊標籤與排序
         function clearDrinkFilters() {
-          selectedDrinkTags = [];
-          selectedDrinkSortMode = '';
-          priceDirection = '';
-          dateDirection = '';
+            selectedDrinkTags = [];
+            selectedDrinkSortMode = '';
+            priceDirection = '';
+            dateDirection = '';
           
-          // 還原篩選膠囊樣式
-          document.querySelectorAll('.drink-tag-btn').forEach(btn => {
-              btn.className = "drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition";
-          });
+            document.querySelectorAll('.drink-tag-btn').forEach(btn => {
+                btn.className = "drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition";
+            });
           
-          // 還原這兩個動態排序按鈕
-          const sortPriceBtn = document.getElementById('sortPriceBtn');
-          const sortDateBtn = document.getElementById('sortDateBtn');
-          if (sortPriceBtn) {
-              sortPriceBtn.className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition";
-              sortPriceBtn.innerHTML = "<span>價格 ⇅</span>";
-          }
-          if (sortDateBtn) {
-              sortDateBtn.className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition";
-              sortDateBtn.innerHTML = "<span>更新日期 ⇅</span>";
-          }
-          filterAndRender();
-      }
+            const sortPriceBtn = document.getElementById('sortPriceBtn');
+            const sortDateBtn = document.getElementById('sortDateBtn');
+            if (sortPriceBtn) {
+                sortPriceBtn.className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition";
+                sortPriceBtn.innerHTML = "<span>價格 ⇅</span>";
+            }
+            if (sortDateBtn) {
+                sortDateBtn.className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition";
+                sortDateBtn.innerHTML = "<span>更新日期 ⇅</span>";
+            }
+            filterAndRender();
+        }
 
         function globalSwitch(type) {
             currentView = type;
             const isDrink = type === 'drink';
+            const isEvent = type === 'event';
+            const isPending = type === 'pending';
             
+            // 🌟 分頁主容器顯示切換
             document.getElementById('drinkViewSection').classList.toggle('hidden', !isDrink);
-            document.getElementById('eventViewSection').classList.toggle('hidden', isDrink);
+            document.getElementById('eventViewSection').classList.toggle('hidden', !isEvent);
+            document.getElementById('pendingViewSection').classList.toggle('hidden', !isPending);
             
-            // 🌟 控制搜尋欄中間的按鈕顯示狀態 (商品則顯示摺疊按鈕，活動則顯示排序下拉選單)
+            // 篩選按鈕欄位顯示控制
             document.getElementById('toggleFilterBtn').classList.toggle('hidden', !isDrink);
-            document.getElementById('eventSortContainer').classList.toggle('hidden', isDrink);
+            document.getElementById('eventSortContainer').classList.toggle('hidden', !isEvent);
             
-            // 如果切換到活動分頁，強制將商品篩選摺疊收合
+            // 若切換至待審名單或活動，隱藏飲料篩選抽屜
             if (!isDrink) {
                 const container = document.getElementById('drinkCollapseFilterContainer');
                 container.style.maxHeight = '0px';
@@ -738,9 +809,12 @@
                 document.getElementById('toggleArrow').style.transform = 'rotate(0deg)';
             }
             
+            // 分頁按鈕樣式切換
             document.getElementById('viewTabDrink').className = isDrink ? "flex-1 py-3 text-center text-sm font-bold border-b-2 border-green-500 text-green-600 transition" : "flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition";
-            document.getElementById('viewTabEvent').className = !isDrink ? "flex-1 py-3 text-center text-sm font-bold border-b-2 border-blue-500 text-blue-600 transition" : "flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition";
+            document.getElementById('viewTabEvent').className = isEvent ? "flex-1 py-3 text-center text-sm font-bold border-b-2 border-blue-500 text-blue-600 transition" : "flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition";
+            document.getElementById('viewTabPending').className = isPending ? "flex-1 py-3 text-center text-sm font-bold border-b-2 border-amber-500 text-amber-600 transition" : "flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition";
             
+            // 按鈕與排版細節調整
             const openCreateBtn = document.getElementById('openCreateBtn');
             if (isDrink) {
                 document.getElementById('drinkForm').classList.remove('hidden');
@@ -748,19 +822,22 @@
                 document.getElementById('createModalTitle').innerText = "✍️ 發現漏網飲料？歡迎新增！";
                 openCreateBtn.innerText = "➕ 新增商品";
                 openCreateBtn.className = "bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap shadow-xs";
-            } else {
+            } else if (isEvent) {
                 document.getElementById('drinkForm').classList.add('hidden');
                 document.getElementById('eventForm').classList.remove('hidden');
                 document.getElementById('createModalTitle').innerText = "✍️ 發現漏網活動？歡迎新增！";
                 openCreateBtn.innerText = "➕ 新增活動";
                 openCreateBtn.className = "bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap shadow-xs";
+            } else {
+                // 待審名單下不提供手動新增，因此隱藏此按鈕
+                openCreateBtn.innerText = "➕ 新增資料";
+                openCreateBtn.className = "hidden";
             }
             
             document.getElementById('searchInput').value = "";
             clearDrinkFilters();
         }
 
-        // 監聽關鍵字輸入，即時進行過濾
         document.getElementById('searchInput').addEventListener('input', () => {
             filterAndRender();
         });
@@ -944,7 +1021,7 @@
             if (type === 'drink') {
                 const name = e.target.querySelector('[name="name"]').value;
                 const price = parseInt(e.target.querySelector('[name="price"]').value, 10);
-                const user_name = e.target.querySelector('[name="user_name"]').value.trim() || null; // 🌟 撈取 user_name
+                const user_name = e.target.querySelector('[name="user_name"]').value.trim() || null; 
                 
                 if (price > 500) {
                     alert("❌ 安全警告：單瓶飲料價格不可能大於 500 元！");
@@ -966,11 +1043,13 @@
                         category_tags: checkedCategoryTags.join(','),
                         remark: compiledRemark, 
                         status: 'pending',
-                        user_name // 🌟 寫入至資料庫
+                        user_name 
                     }]);
                     if (error) throw error;
                     alert("🎉 新增飲料成功！已送往審核。");
                     closeCreateModal();
+                    await fetchPendingData(); // 即時重整待審名單
+                    filterAndRender();
                 } catch(err) { alert(err.message); } finally { submitBtn.disabled = false; }
 
             } else {
@@ -979,16 +1058,18 @@
                 const start_date = normalizeDate(e.target.querySelector('[name="start_date"]').value);
                 const end_date = normalizeDate(e.target.querySelector('[name="end_date"]').value);
                 const compiledDetail = document.getElementById('createEventDetail').value.trim() || null;
-                const user_name = e.target.querySelector('[name="user_name"]').value.trim() || null; // 🌟 撈取 user_name
+                const user_name = e.target.querySelector('[name="user_name"]').value.trim() || null; 
 
                 submitBtn.disabled = true;
                 try {
                     const { error } = await supabaseClient.from('event_submissions').insert([{
-                        brand, url, start_date, end_date, detail: compiledDetail, status: 'pending', user_name // 🌟 寫入至資料庫
+                        brand, url, start_date, end_date, detail: compiledDetail, status: 'pending', user_name 
                     }]);
                     if (error) throw error;
                     alert("🎉 新增活動成功！已送往審核。");
                     closeCreateModal();
+                    await fetchPendingData(); // 即時重整待審名單
+                    filterAndRender();
                 } catch(err) { alert(err.message); } finally { submitBtn.disabled = false; }
             }
         }
@@ -1054,7 +1135,7 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1">修正 常用活動標籤</label>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">修正 常用活動活動標籤</label>
                         <div class="grid grid-cols-2 gap-1.5 bg-gray-50 p-2 rounded-lg border border-gray-200 text-[11px]">
                             <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_drink_tags" value="買一送一" onchange="syncIssueDrinkTags()" class="rounded text-amber-600"> <span>買一送一</span></label>
                             <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_drink_tags" value="第二件半價" onchange="syncIssueDrinkTags()" class="rounded text-amber-600"> <span>第二件半價</span></label>
@@ -1199,6 +1280,8 @@
 
                 alert("🚨 勘誤回報成功！管理員已收到修正規格表。");
                 closeIssueModal();
+                await fetchPendingData(); // 即時重整待審名單
+                filterAndRender();
             } catch (err) {
                 alert(`回報失敗：${err.message}`);
             } finally {
