@@ -252,7 +252,10 @@
                 const [drinksRes, eventsRes, reportsRes] = await Promise.all([
                     supabaseClient.from('drink_submissions').select('*').eq('status', 'approved').order('id', { ascending: false }),
                     supabaseClient.from('event_submissions').select('*').eq('status', 'approved').order('id', { ascending: false }),
-                    supabaseClient.from('issue_reports').select('*').eq('status', 'pending').order('created_at', { ascending: true })
+                    supabaseClient.from('issue_reports').select('*').eq('status', 'pending').order('created_at', { ascending: true }),
+                    // 撈取待審核的新增項目 (假設新增時 status 為 'pending')
+                    supabaseClient.from('drink_submissions').select('*').eq('status', 'pending'),
+                    supabaseClient.from('event_submissions').select('*').eq('status', 'pending')
                 ]);
 
                 if (drinksRes.error) throw drinksRes.error;
@@ -263,12 +266,16 @@
                 localEvents = eventsRes.data || [];
                 localReports = reportsRes.data || [];
 
-                document.getElementById('countActiveDrinks').innerText = localDrinks.length;
-                document.getElementById('countActiveEvents').innerText = localEvents.length;
-                document.getElementById('pendingCount').innerText = localReports.length;
+                // 將新增項目合併進 reports 區塊或分開渲染
+                const pendingNewDrinks = newSubmissionsRes[0].data || [];
+                const pendingNewEvents = newSubmissionsRes[1].data || [];
+                
+                //document.getElementById('countActiveDrinks').innerText = localDrinks.length;
+                //document.getElementById('countActiveEvents').innerText = localEvents.length;
+                //document.getElementById('pendingCount').innerText = localReports.length;
 
                 renderActiveLists();
-                renderReportsList();
+                renderReportsList(pendingNewDrinks, pendingNewEvents); // 傳入新項目
 
             } catch (e) {
                 console.error(e);
@@ -346,6 +353,24 @@
         // 渲染右側使用者勘誤回報
         function renderReportsList() {
             const reportContainer = document.getElementById('reportListContainer');
+            // 生成「新增」區塊 (綠色背景)
+            const newItems = [
+                ...newDrinks.map(d => `
+                    <div class="report-item new">
+                        <span class="badge">🆕 新增飲料</span>
+                        <p><strong>${d.name}</strong> - ${d.price}元</p>
+                        <button onclick="updateStatus('drink_submissions', ${d.id}, 'approved')">核准上架</button>
+                    </div>
+                `),
+                ...newEvents.map(e => `
+                    <div class="report-item new">
+                        <span class="badge">🆕 新增活動</span>
+                        <p><strong>${e.brand}</strong></p>
+                        <button onclick="updateStatus('event_submissions', ${e.id}, 'approved')">核准上架</button>
+                    </div>
+                `)
+            ];
+            
             if (localReports.length === 0) {
                 reportContainer.innerHTML = `<p class="text-sm text-green-600 text-center py-8 font-medium">🎉 目前沒有任何使用者回報需要審核！</p>`;
                 return;
@@ -420,7 +445,21 @@
                 `;
             }).join('');
         }
-
+        // 新增項目核准功能
+        async function approveNewSubmission(table, id) {
+            if (!confirm("確定要將此項目核准上架嗎？")) return;
+            try {
+                const { error } = await supabaseClient
+                    .from(table)
+                    .update({ status: 'approved' })
+                    .eq('id', id);
+                if (error) throw error;
+                alert("上架成功！");
+                refreshAllData();
+            } catch (e) {
+                alert("失敗：" + e.message);
+            }
+        }
         
         // ====================刪除項目函式
         async function deleteItem(type, id) {
