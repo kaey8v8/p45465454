@@ -301,8 +301,9 @@
                 renderUnifiedReviewList();
         
             } catch (e) {
-                console.error(e);
-                alert("撈取資料時出錯，請檢查權限設定！");
+                console.error("Supabase 詳細錯誤資訊：", e);
+                // 如果有單獨的錯誤訊息就顯示出來
+                alert(`撈取資料時出錯！\n錯誤原因: ${e.message || e.details || '未知權限問題'}\n請打開瀏覽器主控台(F12)查看 Console 報告。`);
             }
         }
         
