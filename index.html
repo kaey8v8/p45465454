@@ -411,6 +411,8 @@
                 }));
 
                 const events = (eventPend.data || []).map(item => ({
+                    id: item.id, // 保留原始 ID
+                    source_table: 'event_submissions', // 標記來源表
                     created_at: item.created_at,
                     name: `🎁 [新增活動] ${item.brand}`,
                     details: `網址：${item.url} | 日期：${item.start_date || '即日'} ~ ${item.end_date} | 內容：${item.detail || '無'}`,
@@ -1026,6 +1028,7 @@
             try {
                 let payload = { 
                     target_type: type, 
+                    report_type: 'new',
                     status: 'pending',
                     user_name: e.target.querySelector('[name="user_name"]').value.trim() || '匿名'
                 };
