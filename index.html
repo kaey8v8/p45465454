@@ -1018,62 +1018,67 @@
             e.preventDefault();
             const submitBtn = e.target.querySelector('button[type="submit"]');
             
-            if (type === 'drink') {
-                const name = e.target.querySelector('[name="name"]').value;
-                const price = parseInt(e.target.querySelector('[name="price"]').value, 10);
-                const user_name = e.target.querySelector('[name="user_name"]').value.trim() || null; 
-                
-                if (price > 500) {
-                    alert("❌ 安全警告：單瓶飲料價格不可能大於 500 元！");
-                    return;
+            submitBtn.disabled = true;
+            submitBtn.innerText = "提交中...";
+        
+            try {
+                let payload = { 
+                    target_type: type, 
+                    status: 'pending',
+                    user_name: e.target.querySelector('[name="user_name"]').value.trim() || '匿名'
+                };
+        
+                if (type === 'drink') {
+                    const name = e.target.querySelector('[name="name"]').value;
+                    const price = parseInt(e.target.querySelector('[name="price"]').value, 10);
+                    
+                    if (price > 500) {
+                        alert("❌ 安全警告：單瓶飲料價格不可能大於 500 元！");
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = "提交飲料審核";
+                        return;
+                    }
+        
+                    const checkedCategoryTags = [];
+                    document.querySelectorAll('#drinkForm input[name="drink_category_tags"]').forEach(cb => {
+                        if (cb.checked) checkedCategoryTags.push(cb.value);
+                    });
+        
+                    payload.drink_name = name;
+                    payload.drink_price = price;
+                    payload.drink_category_tags = checkedCategoryTags.join(',') || null;
+                    payload.drink_remark = document.getElementById('createDrinkRemark').value.trim() || null;
+        
+                } else {
+                    const brand = e.target.querySelector('[name="brand"]').value;
+                    const url = e.target.querySelector('[name="url"]').value;
+                    const start_date = normalizeDate(e.target.querySelector('[name="start_date"]').value);
+                    const end_date = normalizeDate(e.target.querySelector('[name="end_date"]').value);
+                    
+                    payload.event_brand = brand;
+                    payload.event_url = url;
+                    payload.event_start_date = start_date;
+                    payload.event_end_date = end_date;
+                    payload.event_detail = document.getElementById('createEventDetail').value.trim() || null;
                 }
-
-                const checkedCategoryTags = [];
-                document.querySelectorAll('#drinkForm input[name="drink_category_tags"]').forEach(cb => {
-                    if (cb.checked) checkedCategoryTags.push(cb.value);
-                });
-
-                const compiledRemark = document.getElementById('createDrinkRemark').value.trim() || null;
-
-                submitBtn.disabled = true;
-                try {
-                    const { error } = await supabaseClient.from('drink_submissions').insert([{
-                        name, 
-                        price, 
-                        category_tags: checkedCategoryTags.join(','),
-                        remark: compiledRemark, 
-                        status: 'pending',
-                        user_name 
-                    }]);
-                    if (error) throw error;
-                    alert("🎉 新增飲料成功！已送往審核。");
-                    closeCreateModal();
-                    await fetchPendingData(); // 即時重整待審名單
-                    filterAndRender();
-                } catch(err) { alert(err.message); } finally { submitBtn.disabled = false; }
-
-            } else {
-                const brand = e.target.querySelector('[name="brand"]').value;
-                const url = e.target.querySelector('[name="url"]').value;
-                const start_date = normalizeDate(e.target.querySelector('[name="start_date"]').value);
-                const end_date = normalizeDate(e.target.querySelector('[name="end_date"]').value);
-                const compiledDetail = document.getElementById('createEventDetail').value.trim() || null;
-                const user_name = e.target.querySelector('[name="user_name"]').value.trim() || null; 
-
-                submitBtn.disabled = true;
-                try {
-                    const { error } = await supabaseClient.from('event_submissions').insert([{
-                        brand, url, start_date, end_date, detail: compiledDetail, status: 'pending', user_name 
-                    }]);
-                    if (error) throw error;
-                    alert("🎉 新增活動成功！已送往審核。");
-                    closeCreateModal();
-                    await fetchPendingData(); // 即時重整待審名單
-                    filterAndRender();
-                } catch(err) { alert(err.message); } finally { submitBtn.disabled = false; }
+        
+                // 改為一律寫入 issue_reports 表
+                const { error } = await supabaseClient.from('issue_reports').insert([payload]);
+                
+                if (error) throw error;
+        
+                alert("🎉 提交成功！資料已送往審核區，管理員確認後會進行更新。");
+                closeCreateModal();
+                await fetchPendingData(); // 即時重整畫面上的「待審名單」
+                filterAndRender();
+                
+            } catch(err) { 
+                alert(`提交失敗：${err.message}`); 
+            } finally { 
+                submitBtn.disabled = false; 
+                submitBtn.innerText = type === 'drink' ? "提交飲料審核" : "提交活動審核";
             }
         }
-
         function openIssueModal(type, id) {
             document.getElementById('issueTargetType').value = type;
             document.getElementById('issueTargetId').value = id;
