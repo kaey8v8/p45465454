@@ -814,7 +814,8 @@
                     ? `<span class="text-[10px] text-gray-500 font-bold bg-white px-2 py-0.5 rounded border border-gray-200 truncate max-w-[80px]" title="${item.user_name}">${item.user_name}</span>`
                     : `<span class="text-[10px] text-gray-400 font-normal italic">匿名</span>`;
 
-
+                // 預定義變數以防止 ReferenceError
+                let originalContent = "無對照資料";
                 // 處理新投稿 (新增品項/活動)
                 if (item.reviewType === 'newSubmission') {
                     const isDrink = item.target_type === 'drink';
