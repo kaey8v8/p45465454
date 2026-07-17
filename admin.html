@@ -836,27 +836,34 @@
                         </div>
                     `;
                 }
-// 2. 勘誤回報邏輯 
+                  // 2. 勘誤回報邏輯 
                 if (item.reviewType === 'report') {
                     const targetTypeLabel = item.target_type === 'drink' ? '🍹 飲料勘誤' : '🎉 活動勘誤';
                     
                     // 查詢原資料
-                    let changeDetails = "";
+                    let currentOriginalContent = "查無原資料";
                     if (item.target_type === 'drink') {
-                        changeDetails = `
-                            <div class="text-[11px] text-amber-800 font-bold mt-1">
-                                變更項目：${item.drink_name || '無'} / 
-                                價格：${item.drink_price !== null ? item.drink_price : '無'} / 
-                                備註：${item.drink_remark || '無'}
-                            </div>`;
+                        const matched = localDrinks.find(d => Number(d.id) === Number(item.target_id));
+                        if (matched) currentOriginalContent = `原名稱: ${matched.name} | 原價格: ${matched.price}`;
                     } else {
-                        changeDetails = `
-                            <div class="text-[11px] text-amber-800 font-bold mt-1">
-                                變更品牌：${item.event_brand || '無'} / 
-                                日期：${item.event_start_date || '無'} ~ ${item.event_end_date || '無'} / 
-                                細節：${item.event_detail || '無'}
-                            </div>`;
+                        const matched = localEvents.find(ev => Number(ev.id) === Number(item.target_id));
+                        if (matched) currentOriginalContent = `原品牌: ${matched.brand} | 原細節: ${matched.detail}`;
                     }
+                    // if (item.target_type === 'drink') {
+                    //     changeDetails = `
+                    //         <div class="text-[11px] text-amber-800 font-bold mt-1">
+                    //             變更項目：${item.drink_name || '無'} / 
+                    //             價格：${item.drink_price !== null ? item.drink_price : '無'} / 
+                    //             備註：${item.drink_remark || '無'}
+                    //         </div>`;
+                    // } else {
+                    //     changeDetails = `
+                    //         <div class="text-[11px] text-amber-800 font-bold mt-1">
+                    //             變更品牌：${item.event_brand || '無'} / 
+                    //             日期：${item.event_start_date || '無'} ~ ${item.event_end_date || '無'} / 
+                    //             細節：${item.event_detail || '無'}
+                    //         </div>`;
+                    // }
 
                     return `
                         <div class="p-3.5 bg-amber-50/70 rounded-xl border border-amber-200 space-y-2.5 shadow-xs">
@@ -866,7 +873,7 @@
                             </div>
                             <div class="text-[11px] bg-gray-100/90 p-2 rounded text-gray-500 border border-gray-200">
                                 <strong class="text-gray-700 block">原資料：</strong>
-                                ${originalContent}
+                                ${currentOriginalContent}
                             </div>
                             ${changeDetails}
                             <div class="flex justify-end">${authorHTML}</div>
@@ -880,7 +887,7 @@
                 return '';
             }).join('');
         }
-        // 處理新投稿核可入庫 (新增函數)
+        // 處理新投稿核可入庫 
         async function approveNewSubmission(reportId) {
             if (!confirm("確定要將此新投稿核可正式上架嗎？")) return;
             
@@ -1074,16 +1081,6 @@
                 alert("操作失敗：" + e.message);
             }
         }
-                // async function rejectSubmission(type, id) {
-        //     if (!confirm("確定要拒絕並刪除投稿嗎？")) return;
-        //     try {
-        //             // 新投稿的類型在 pendingDrinks/pendingEvents 中對應的表是 _submissions
-        //             const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
-        //             const { error } = await supabaseClient.from(targetTable).delete().eq('id', id);
-        //             if (error) throw error;
-        //             refreshAllData(); // 成功後重繪畫面
-        //         } catch (e) { alert("操作失敗：" + e.message); }
-        //     }
 
         async function ignoreReport(reportId) {
             if (!confirm("確定要忽略此勘誤回報嗎？")) return;
@@ -1106,6 +1103,7 @@
             const report = allPendingItems.find(rep => rep.id === reportId && rep.reviewType === 'report');
             if (!report) return;
             const targetId = report.target_id;
+            const targetId = Number(report.target_id); // 強制轉數字
             const isDrink = report.target_type === 'drink';
 
             if (!confirm(`確定要將回報新數據覆蓋原資料嗎？`)) return;
@@ -1113,7 +1111,7 @@
             try {
                 let overwritePayload = {};
                 if (isDrink) {
-                    const original = localDrinks.find(d => d.id === targetId) || {};
+                    const original = localDrinks.find(d => Number(d.id) === targetId) || {};
                     overwritePayload = {
                         name: report.drink_name ? report.drink_name.trim() : original.name,
                         price: report.drink_price !== null ? report.drink_price : original.price,
@@ -1122,21 +1120,37 @@
                         user_name: report.user_name || original.user_name
                     };
                 } else {
-                    const original = localEvents.find(e => e.id === targetId) || {};
+                    const original = localEvents.find(e => Number(e.id) === targetId) || {};
                     overwritePayload = {
                         brand: report.event_brand ? report.event_brand.trim() : original.brand,
                         detail: report.event_detail ? report.event_detail.trim() : original.detail,
                         user_name: report.user_name || original.user_name
                     };
                 }
-                // 更新主表
-                await supabaseClient.from(isDrink ? 'drink_submissions' : 'event_submissions').update(overwritePayload).eq('id', targetId);
-                // 將這筆報告從佇列移除或標記為處理完成
+
+                // 更新主表 (使用 targetId)
+                const { error: updateError } = await supabaseClient
+                    .from(isDrink ? 'drink_submissions' : 'event_submissions')
+                    .update(overwritePayload)
+                    .eq('id', targetId);
+                    
+                if (updateError) throw updateError;
+        
+                // 標記報告為已完成
                 await supabaseClient.from('issue_reports').update({ status: 'approved' }).eq('id', reportId);
-                alert("✔️ 覆蓋更新成功！");
+        
+                alert("✔️ 更新並歸檔成功！");
                 refreshAllData();
-            } catch (e) { alert("⚠️操作失敗：" + e.message); }
+            } catch (e) { alert("⚠️操作失敗：" + e.message); console.error(e); }
         }
+        //         // 更新主表
+        //         await supabaseClient.from(isDrink ? 'drink_submissions' : 'event_submissions').update(overwritePayload).eq('id', targetId);
+        //         // 將這筆報告從佇列移除或標記為處理完成
+        //         await supabaseClient.from('issue_reports').update({ status: 'approved' }).eq('id', reportId);
+        //         alert("✔️ 覆蓋更新成功！");
+        //         refreshAllData();
+        //     } catch (e) { alert("⚠️操作失敗：" + e.message); }
+        // }
 
         async function deleteItem(type, id) {
             if (!confirm("確定要徹底刪除此項目嗎？")) return;
