@@ -32,7 +32,7 @@
                 <button id="viewTabEvent" onclick="globalSwitch('event')" class="flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition">
                     🎁 品牌抽獎活動
                 </button>
-                <!-- 🌟 新增：等待審核清單分頁按鈕 -->
+                <!-- 新增：等待審核清單分頁按鈕 -->
                 <button id="viewTabPending" onclick="globalSwitch('pending')" class="flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition">
                     📝 待審名單
                 </button>
@@ -44,7 +44,7 @@
                     <input type="text" id="searchInput" placeholder="輸入關鍵字搜尋..." 
                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
                     
-                    <!-- 🌟 摺疊篩選與排序控制按鈕 -->
+                    <!-- 摺疊篩選與排序控制按鈕 -->
                     <div id="filterToggleWrapper" class="flex items-center gap-2">
                         <!-- 飲料分頁專用：篩選與排序摺疊按鈕 -->
                         <button id="toggleFilterBtn" onclick="toggleCollapseFilter()" class="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-2 rounded-lg transition border border-gray-200 shadow-xs whitespace-nowrap">
@@ -66,7 +66,7 @@
                     </button>
                 </div>
 
-                <!-- 🌟 飲料分類、糖分與排序 摺疊容器 -->
+                <!-- 飲料分類、糖分與排序 摺疊容器 -->
                 <div id="drinkCollapseFilterContainer" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out bg-gray-50 rounded-xl border-0 border-transparent">
                     <div class="p-4 space-y-4 text-left">
                         <!-- 飲料大類 -->
@@ -122,7 +122,7 @@
                     <p class="col-span-full text-xs text-gray-400 text-center py-4">資料同步中...</p>
                 </div>
 
-                <!-- 🌟 新增：等待審核清單看板內容 (Table 表格排版) -->
+                <!-- 等待審核清單看板內容 (Table 表格排版) -->
                 <div id="pendingViewSection" class="hidden overflow-x-auto border border-gray-200 rounded-xl">
                     <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
                         <thead class="bg-gray-50">
@@ -241,7 +241,7 @@
                     <label class="block text-xs font-semibold text-gray-500 mb-1">備註說明 (Remark)</label>
                     <textarea id="createDrinkRemark" name="remark" rows="2" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-green-500" placeholder="例如：特價只到本週日" oninput="syncCreateDrinkTags()"></textarea>
                 </div>
-                <!-- 🌟 署名欄位 (飲料) -->
+                <!-- 署名欄位 (飲料) -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 mb-1">✍️ 署名 (留空則預設匿名)</label>
                     <input type="text" name="user_name" placeholder="請輸入暱稱..." class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-green-500">
@@ -305,7 +305,7 @@
                     <label class="block text-xs font-semibold text-gray-500 mb-1">活動細節說明 (Detail)</label>
                     <textarea id="createEventDetail" name="detail" rows="3" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-blue-500" placeholder="例如：滿額 199 元加碼送周邊" oninput="syncCreateEventTags()"></textarea>
                 </div>
-                <!-- 🌟 署名欄位 (活動) -->
+                <!-- 署名欄位 (活動) -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 mb-1">✍️ 署名 (留空則預設匿名)</label>
                     <input type="text" name="user_name" placeholder="請輸入暱稱..." class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-blue-500">
@@ -353,7 +353,7 @@
         
         let allDrinks = [];
         let allEvents = [];
-        let pendingList = []; // 🌟 新增：存放所有 pending 狀態的待審資料
+        let pendingList = []; // 存放所有 pending 狀態的待審資料
         let currentView = 'drink';
         
         let selectedDrinkTags = [];
@@ -383,7 +383,7 @@
                 allDrinks = drinkRes.data || [];
                 allEvents = eventRes.data || [];
 
-                // 🌟 新增：獲取狀態為 pending 的飲料、活動與勘誤回報
+                // 獲取狀態為 pending 的飲料、活動與勘誤回報
                 await fetchPendingData();
 
                 filterAndRender();
@@ -392,7 +392,7 @@
             }
         }
 
-        // 🌟 新增：拉取所有狀態為 pending 的資料並進行格式統一
+        // 拉取所有狀態為 pending 的資料並進行格式統一
         async function fetchPendingData() {
             try {
                 const [drinkPend, eventPend, issuePend] = await Promise.all([
@@ -427,7 +427,7 @@
                         created_at: item.created_at,
                         name: nameLabel,
                         details: detailLabel,
-                        user_name: '系統回報 (匿名)'
+                        user_name: item.user_name || '匿名勘誤'
                     };
                 });
 
@@ -569,7 +569,7 @@
 
                 renderEvents(filtered);
             } else {
-                // 🌟 待審名單過濾
+                // 待審名單過濾
                 let filtered = [...pendingList];
                 if (keyword) {
                     filtered = filtered.filter(item => 
@@ -721,7 +721,7 @@
           }).join('');
         }
 
-        // 🌟 新增：渲染待審核清單內容的 Table 函式
+        // 渲染待審核清單內容的 Table 函式
         function renderPending(data) {
             const tableBody = document.getElementById('pendingTableBody');
             if (data.length === 0) {
@@ -792,7 +792,7 @@
             const isEvent = type === 'event';
             const isPending = type === 'pending';
             
-            // 🌟 分頁主容器顯示切換
+            // 分頁主容器顯示切換
             document.getElementById('drinkViewSection').classList.toggle('hidden', !isDrink);
             document.getElementById('eventViewSection').classList.toggle('hidden', !isEvent);
             document.getElementById('pendingViewSection').classList.toggle('hidden', !isPending);
@@ -1154,6 +1154,11 @@
                         <label class="block text-xs font-semibold text-gray-500 mb-1">修正 其他備註</label>
                         <textarea id="issueDrinkRemark" name="drink_remark" rows="2" placeholder="選填修正敘述" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none" oninput="syncIssueDrinkTags()"></textarea>
                     </div>
+                    <!-- 🌟 勘誤署名區塊 (飲料) -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">✍️ 署名 (留空則預設匿名)</label>
+                        <input type="text" name="user_name" placeholder="請輸入暱稱..." class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none">
+                    </div>
                 `;
                 
                 setTimeout(() => {
@@ -1217,6 +1222,11 @@
                         <label class="block text-xs font-semibold text-gray-500 mb-1">修正 活動細節備註</label>
                         <textarea id="issueEventDetail" name="event_detail" rows="2" placeholder="選填修正敘述" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none" oninput="syncIssueEventTags()"></textarea>
                     </div>
+                    <!-- 🌟 勘誤署名區塊 (活動) -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">✍️ 署名 (留空則預設匿名)</label>
+                        <input type="text" name="user_name" placeholder="請輸入暱稱..." class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none">
+                    </div>
                 `;
                 
                 setTimeout(() => {
@@ -1248,6 +1258,10 @@
 
             try {
                 let payload = { target_type: type, target_id: id, status: 'pending' };
+
+                // 🌟 擷取共通或各自的署名欄位
+                const user_name = e.target.querySelector('[name="user_name"]').value.trim() || null;
+                payload.user_name = user_name;
 
                 if (type === 'drink') {
                     const price = parseInt(e.target.querySelector('[name="drink_price"]').value, 10);
