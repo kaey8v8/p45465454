@@ -838,15 +838,23 @@
                     const targetTypeLabel = item.target_type === 'drink' ? '🍹 飲料勘誤' : '🎉 活動勘誤';
                     
                     // 查詢原資料
-                    let originalContent = "查無資料";
+                    let changeDetails = "";
                     if (item.target_type === 'drink') {
-                        const matched = localDrinks.find(d => d.id === item.target_id);
-                        if (matched) originalContent = `原名: ${matched.name} | 原價: ${matched.price}元`;
+                        changeDetails = `
+                            <div class="text-[11px] text-amber-800 font-bold mt-1">
+                                變更項目：${item.drink_name || '無'} / 
+                                價格：${item.drink_price !== null ? item.drink_price : '無'} / 
+                                備註：${item.drink_remark || '無'}
+                            </div>`;
                     } else {
-                        const matched = localEvents.find(ev => ev.id === item.target_id);
-                        if (matched) originalContent = `原品牌: ${matched.brand}`;
+                        changeDetails = `
+                            <div class="text-[11px] text-amber-800 font-bold mt-1">
+                                變更品牌：${item.event_brand || '無'} / 
+                                日期：${item.event_start_date || '無'} ~ ${item.event_end_date || '無'} / 
+                                細節：${item.event_detail || '無'}
+                            </div>`;
                     }
-        
+
                     return `
                         <div class="p-3.5 bg-amber-50/70 rounded-xl border border-amber-200 space-y-2.5 shadow-xs">
                             <div class="flex justify-between items-center text-[10px]">
@@ -854,9 +862,10 @@
                                 <span class="text-gray-400">${itemDate}</span>
                             </div>
                             <div class="text-[11px] bg-gray-100/90 p-2 rounded text-gray-500 border border-gray-200">
-                                <strong class="text-gray-700 block">原資料：</strong>${originalContent}
+                                <strong class="text-gray-700 block">原資料：</strong>
+                                ${originalContent}
                             </div>
-                            <div class="text-[11px] text-amber-800 font-bold">回報變更：${item.drink_name || item.event_brand || '內容更新'}</div>
+                            ${changeDetails}
                             <div class="flex justify-end">${authorHTML}</div>
                             <div class="grid grid-cols-2 gap-2">
                                 <button onclick="ignoreReport(${item.id})" class="bg-white text-gray-600 text-xs py-1.5 rounded-lg border border-gray-200">忽略</button>
