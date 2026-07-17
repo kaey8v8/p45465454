@@ -1102,7 +1102,7 @@
         async function overwriteAndApprove(reportId) {
             const report = allPendingItems.find(rep => rep.id === reportId && rep.reviewType === 'report');
             if (!report) return;
-            const targetId = report.target_id;
+            // const targetId = report.target_id;
             const targetId = Number(report.target_id); // 強制轉數字
             const isDrink = report.target_type === 'drink';
 
