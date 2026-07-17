@@ -402,6 +402,8 @@
                 ]);
 
                 const drinks = (drinkPend.data || []).map(item => ({
+                    id: item.id, // 保留原始 ID
+                    source_table: 'drink_submissions', // 標記來源表
                     created_at: item.created_at,
                     name: `🥤 [新增飲料] ${item.name}`,
                     details: `價格：${item.price} 元 | 類別：${item.category_tags || '無'} | 備註：${item.remark || '無'}`,
