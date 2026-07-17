@@ -817,25 +817,28 @@
 
                 // 預定義變數以防止 ReferenceError
                 let originalContent = "無對照資料";
-                // 處理新投稿 (新增品項/活動)
-                if (item.reviewType === 'newSubmission') {
+        // 1. 處理新投稿 (包含詳細資料)
+                if (item.reviewType === 'newSubmission' || item.reviewType === 'submission') {
                     const isDrink = item.target_type === 'drink';
+                    const targetTypeLabel = isDrink ? '🥤 新增飲料' : '🎉 新增活動';
+                    const detailsHTML = isDrink 
+                        ? `<div class="text-xs text-gray-600 mt-1 space-y-0.5"><p><strong>價格：</strong> ${item.drink_price || '無'}</p><p><strong>類別：</strong> ${item.drink_category_tags || '無'}</p><p><strong>備註：</strong> ${item.drink_remark || '無'}</p></div>`
+                        : `<div class="text-xs text-gray-600 mt-1 space-y-0.5"><p><strong>品牌：</strong> ${item.event_brand || '無'}</p><p><strong>時間：</strong> ${item.event_start_date || '無'} ~ ${item.event_end_date || '無'}</p><p><strong>細節：</strong> ${item.event_detail || '無'}</p></div>`;
+        
                     return `
-                        <div class="p-3.5 bg-green-50/50 rounded-xl border border-green-200 space-y-2 shadow-xs">
+                        <div class="p-3.5 bg-green-50/70 rounded-xl border border-green-200 space-y-2 shadow-xs">
                             <div class="flex justify-between items-center text-[10px]">
-                                <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-bold">${isDrink ? '🥤 新增飲料' : '🎁 新增活動'}</span>
+                                <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-bold">${targetTypeLabel}</span>
+                                <span class="text-gray-400">${itemDate}</span>
                             </div>
-                            <div class="text-xs text-gray-700">
-                                <div><strong>名稱：</strong> ${isDrink ? item.drink_name : item.event_brand}</div>
-                            </div>
+                            <div class="text-sm font-bold text-gray-800">${isDrink ? item.drink_name : item.event_brand}</div>
+                            ${detailsHTML}
                             <div class="flex justify-end">${authorHTML}</div>
                             <div class="grid grid-cols-2 gap-2">
-                                <!-- 補上拒絕按鈕 -->
-                                <button onclick="rejectSubmission('${item.target_type}', ${item.id})" class="bg-white text-gray-600 text-xs py-1.5 rounded-lg border border-gray-200 text-center font-medium">拒絕</button>
+                                <button onclick="rejectSubmission('${item.target_type}', ${item.id})" class="bg-white text-gray-600 text-xs py-1.5 rounded-lg border border-gray-200">拒絕</button>
                                 <button onclick="approveNewSubmission(${item.id})" class="bg-green-600 text-white text-xs font-semibold py-1.5 rounded-lg">核可入庫</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
                   // 2. 勘誤回報邏輯 
                 if (item.reviewType === 'report') {
@@ -886,47 +889,6 @@
                         </div>
                     `;
                 }
-                // 2. 新增投稿邏輯 (請補上這一段來解決新增品項沒細節的問題)
-                    if (item.reviewType === 'newSubmission' || item.reviewType === 'submission') {
-                        const isDrink = item.target_type === 'drink';
-                        const targetTypeLabel = isDrink ? '🥤 新增飲料' : '🎉 新增活動';
-                        
-                        // 組裝詳細資訊 HTML
-                        let detailsHTML = "";
-                        if (isDrink) {
-                                detailsHTML = `
-                                    <div class="text-xs text-gray-600 mt-1 space-y-0.5">
-                                        <p><strong>價格：</strong> ${item.drink_price || '無'}</p>
-                                        <p><strong>類別：</strong> ${item.drink_category_tags || '無'}</p>
-                                        <p><strong>備註：</strong> ${item.drink_remark || '無'}</p>
-                                    </div>`;
-                            } else {
-                                detailsHTML = `
-                                    <div class="text-xs text-gray-600 mt-1 space-y-0.5">
-                                        <p><strong>品牌：</strong> ${item.event_brand || '無'}</p>
-                                        <p><strong>時間：</strong> ${item.event_start_date || '無'} ~ ${item.event_end_date || '無'}</p>
-                                        <p><strong>細節：</strong> ${item.event_detail || '無'}</p>
-                                    </div>`;
-                            }
-                        
-                            return `
-                                <div class="p-3.5 bg-green-50/70 rounded-xl border border-green-200 space-y-2 shadow-xs">
-                                    <div class="flex justify-between items-center text-[10px]">
-                                        <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-bold">${targetTypeLabel}</span>
-                                        <span class="text-gray-400">${itemDate}</span>
-                                    </div>
-                                    <div class="text-sm font-bold text-gray-800">
-                                        ${isDrink ? item.drink_name : item.event_brand}
-                                    </div>
-                                    ${detailsHTML}
-                                    <div class="flex justify-end">${authorHTML}</div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <button onclick="rejectSubmission('${item.target_type}', ${item.id})" class="bg-white text-gray-600 text-xs py-1.5 rounded-lg border border-gray-200">拒絕</button>
-                                        <button onclick="approveNewSubmission(${item.id})" class="bg-green-600 text-white text-xs font-semibold py-1.5 rounded-lg">核可入庫</button>
-                                    </div>
-                                </div>
-                            `;
-                        }
                 return '';
                 
             }).join('');
