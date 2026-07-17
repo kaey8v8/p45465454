@@ -865,21 +865,6 @@
                                 細節：${item.event_detail || '無'}
                             </div>`;
                     }
-                    // if (item.target_type === 'drink') {
-                    //     changeDetails = `
-                    //         <div class="text-[11px] text-amber-800 font-bold mt-1">
-                    //             變更項目：${item.drink_name || '無'} / 
-                    //             價格：${item.drink_price !== null ? item.drink_price : '無'} / 
-                    //             備註：${item.drink_remark || '無'}
-                    //         </div>`;
-                    // } else {
-                    //     changeDetails = `
-                    //         <div class="text-[11px] text-amber-800 font-bold mt-1">
-                    //             變更品牌：${item.event_brand || '無'} / 
-                    //             日期：${item.event_start_date || '無'} ~ ${item.event_end_date || '無'} / 
-                    //             細節：${item.event_detail || '無'}
-                    //         </div>`;
-                    // }
 
                     return `
                         <div class="p-3.5 bg-amber-50/70 rounded-xl border border-amber-200 space-y-2.5 shadow-xs">
@@ -899,8 +884,49 @@
                             </div>
                         </div>
                     `;
-                }
+                    }
+                // 2. 新增投稿邏輯 (請補上這一段來解決新增品項沒細節的問題)
+                    if (item.reviewType === 'submission') {
+                        const targetTypeLabel = item.target_type === 'drink' ? '🥤 新增飲料' : '🎉 新增活動';
+                        
+                        // 組裝詳細資訊 HTML
+                        let detailsHTML = "";
+                        if (item.target_type === 'drink') {
+                            detailsHTML = `
+                                <div class="text-[12px] text-gray-600 mt-1 space-y-0.5">
+                                    <p>價格：${item.drink_price || '無'}</p>
+                                    <p>類別：${item.drink_category_tags || '無'}</p>
+                                    <p>備註：${item.drink_remark || '無'}</p>
+                                </div>`;
+                        } else {
+                            detailsHTML = `
+                                <div class="text-[12px] text-gray-600 mt-1 space-y-0.5">
+                                    <p>品牌：${item.event_brand || '無'}</p>
+                                    <p>時間：${item.event_start_date || '無'} ~ ${item.event_end_date || '無'}</p>
+                                    <p>細節：${item.event_detail || '無'}</p>
+                                </div>`;
+                        }
+                    
+                        return `
+                            <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm space-y-3">
+                                <div class="flex justify-between items-center text-[11px]">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">${targetTypeLabel}</span>
+                                    <span class="text-gray-400">${itemDate}</span>
+                                </div>
+                                <div class="text-sm font-bold text-gray-800">
+                                    ${item.drink_name || item.event_brand || '未命名項目'}
+                                </div>
+                                ${detailsHTML}
+                                <div class="flex justify-end text-[11px] text-gray-400">${authorHTML}</div>
+                                <div class="grid grid-cols-2 gap-2 mt-2">
+                                    <button onclick="rejectSubmission('${item.target_type}', ${item.id})" class="bg-gray-100 text-gray-600 py-1.5 rounded-lg text-xs">拒絕</button>
+                                    <button onclick="approveNewSubmission(${item.id})" class="bg-blue-600 text-white py-1.5 rounded-lg text-xs font-semibold">核可入庫</button>
+                                </div>
+                            </div>
+                        `;
+                        }
                 return '';
+                
             }).join('');
         }
         // 處理新投稿核可入庫 
