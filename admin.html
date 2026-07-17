@@ -1054,34 +1054,27 @@
             } catch (e) { alert("操作失敗：" + e.message); }
         }
         async function rejectSubmission(type, id) {
-            console.log("拒絕按鈕被按下了！目標類型：", type, "目標ID：", id);
-            
-            if (!confirm("確定要拒絕並刪除投稿嗎？")) return;
+            if (!confirm("確定要將此申請標記為已拒絕嗎？")) return;
             
             try {
-                const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
-                console.log("準備刪除資料表:", targetTable, "ID:", id);
+                console.log("正在將 ID:", id, "標記為 rejected");
                 
-                const { data, error } = await supabaseClient
-                    .from(targetTable)
-                    .delete()
+                // 將狀態改為 'rejected' 
+                const { error } = await supabaseClient
+                    .from('issue_reports')
+                    .update({ status: 'rejected' })
                     .eq('id', id);
                     
-                if (error) {
-                    console.error("Supabase 錯誤詳情:", error); // 這裡會抓到具體的 DB 錯誤
-                    alert("資料庫錯誤：" + error.message);
-                    return;
-                }
+                if (error) throw error;
                 
-                alert("已成功拒絕！");
-                refreshAllData();
-                
+                alert("已拒絕！");
+                refreshAllData(); // 重新整理後，面板會自動過濾掉這筆
             } catch (e) {
-                console.error("程式邏輯錯誤:", e);
-                alert("程式執行錯誤：" + e);
+                console.error("更新狀態失敗:", e);
+                alert("操作失敗：" + e.message);
             }
         }
-        // async function rejectSubmission(type, id) {
+                // async function rejectSubmission(type, id) {
         //     if (!confirm("確定要拒絕並刪除投稿嗎？")) return;
         //     try {
         //             // 新投稿的類型在 pendingDrinks/pendingEvents 中對應的表是 _submissions
@@ -1139,8 +1132,7 @@
                 // 更新主表
                 await supabaseClient.from(isDrink ? 'drink_submissions' : 'event_submissions').update(overwritePayload).eq('id', targetId);
                 // 將這筆報告從佇列移除或標記為處理完成
-                await supabaseClient.from('issue_reports').delete().eq('id', reportId);
-                // await supabaseClient.from('issue_reports').update({ status: 'approved' }).eq('id', reportId);
+                await supabaseClient.from('issue_reports').update({ status: 'approved' }).eq('id', reportId);
                 alert("✔️ 覆蓋更新成功！");
                 refreshAllData();
             } catch (e) { alert("⚠️操作失敗：" + e.message); }
