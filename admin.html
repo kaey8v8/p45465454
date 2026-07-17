@@ -799,6 +799,7 @@
 
         // 渲染右側綜合審核清單 
         function renderUnifiedReviewList() {
+            console.log("當前渲染的佇列資料:", allPendingItems);
             const reportContainer = document.getElementById('reportListContainer');
             if (!reportContainer) return;
             if (allPendingItems.length === 0) {
