@@ -1057,11 +1057,13 @@
         async function rejectSubmission(type, id) {
             if (!confirm("確定要拒絕並刪除投稿嗎？")) return;
             try {
-                const { error } = await supabaseClient.from(type === 'drink' ? 'drink_submissions' : 'event_submissions').delete().eq('id', id);
-                if (error) throw error;
-                refreshAllData();
-            } catch (e) { alert("操作失敗：" + e.message); }
-        }
+                    // 新投稿的類型在 pendingDrinks/pendingEvents 中對應的表是 _submissions
+                    const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
+                    const { error } = await supabaseClient.from(targetTable).delete().eq('id', id);
+                    if (error) throw error;
+                    refreshAllData(); // 成功後重繪畫面
+                } catch (e) { alert("操作失敗：" + e.message); }
+            }
 
         async function ignoreReport(reportId) {
             if (!confirm("確定要忽略此勘誤回報嗎？")) return;
@@ -1107,12 +1109,14 @@
                         user_name: report.user_name || original.user_name
                     };
                 }
-
+                // 更新主表
                 await supabaseClient.from(isDrink ? 'drink_submissions' : 'event_submissions').update(overwritePayload).eq('id', targetId);
-                await supabaseClient.from('issue_reports').update({ status: 'approved' }).eq('id', reportId);
+                // 將這筆報告從佇列移除或標記為處理完成
+                await supabaseClient.from('issue_reports').delete().eq('id', reportId);
+                // await supabaseClient.from('issue_reports').update({ status: 'approved' }).eq('id', reportId);
                 alert("✔️ 覆蓋更新成功！");
                 refreshAllData();
-            } catch (e) { alert("⚠️覆蓋失敗：" + e.message); }
+            } catch (e) { alert("⚠️操作失敗：" + e.message); }
         }
 
         async function deleteItem(type, id) {
