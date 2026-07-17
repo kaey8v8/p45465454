@@ -840,14 +840,30 @@
                 if (item.reviewType === 'report') {
                     const targetTypeLabel = item.target_type === 'drink' ? '🍹 飲料勘誤' : '🎉 活動勘誤';
                     
-                    // 查詢原資料
+                    // 預先定義變數以確保不會出現 ReferenceError
                     let currentOriginalContent = "查無原資料";
+                    let changeDetails = "";
+                    // 查詢原資料
                     if (item.target_type === 'drink') {
                         const matched = localDrinks.find(d => Number(d.id) === Number(item.target_id));
-                        if (matched) currentOriginalContent = `原名稱: ${matched.name} | 原價格: ${matched.price}`;
+                        if (matched) currentOriginalContent = `原名: ${matched.name} | 原價: ${matched.price}`;
+                        
+                        changeDetails = `
+                            <div class="text-[11px] text-amber-800 font-bold mt-1">
+                                變更項目：${item.drink_name || '無'} / 
+                                價格：${item.drink_price !== null ? item.drink_price : '無'} / 
+                                備註：${item.drink_remark || '無'}
+                            </div>`;
                     } else {
                         const matched = localEvents.find(ev => Number(ev.id) === Number(item.target_id));
                         if (matched) currentOriginalContent = `原品牌: ${matched.brand} | 原細節: ${matched.detail}`;
+                        
+                        changeDetails = `
+                            <div class="text-[11px] text-amber-800 font-bold mt-1">
+                                變更品牌：${item.event_brand || '無'} / 
+                                日期：${item.event_start_date || '無'} ~ ${item.event_end_date || '無'} / 
+                                細節：${item.event_detail || '無'}
+                            </div>`;
                     }
                     // if (item.target_type === 'drink') {
                     //     changeDetails = `
