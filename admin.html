@@ -886,8 +886,9 @@
                         </div>
                     `;
                     }
+                    console.log("檢查項目:", item.id, "類型:", item.reviewType);
                 // 2. 新增投稿邏輯 (請補上這一段來解決新增品項沒細節的問題)
-                    if (item.reviewType === 'submission') {
+                    if (item.reviewType === 'submission' || item.reviewType === null || item.reviewType === undefined) {
                         const targetTypeLabel = item.target_type === 'drink' ? '🥤 新增飲料' : '🎉 新增活動';
                         
                         // 組裝詳細資訊 HTML
