@@ -933,6 +933,26 @@
                 } catch (e) { alert("入庫失敗：" + e.message); }
             }
         // ==================== 彈窗編輯處理 ====================
+        function parseFlexibleDate(dateStr) {
+            if (!dateStr) return "";
+            let cleanStr = dateStr.trim();
+            
+            // 處理 YYYYMMDD (純數字)
+            if (/^\d{8}$/.test(cleanStr)) {
+                return `${cleanStr.substring(0,4)}-${cleanStr.substring(4,6)}-${cleanStr.substring(6,8)}`;
+            }
+            
+            // 處理 YYYY-MM-DD 或 YYYY/MM/DD (包含分隔符)
+            // 將所有 / 換成 -
+            let parts = cleanStr.replace(/\//g, '-').split('-');
+            if (parts.length === 3) {
+                let y = parts[0];
+                let m = parts[1].padStart(2, '0');
+                let d = parts[2].padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            return cleanStr; // 萬一都不符合，回傳原值
+        }
         function openEditModal(type, id) {
             document.getElementById('editItemType').value = type;
             document.getElementById('editItemId').value = id;
@@ -1046,8 +1066,8 @@
                 updatePayload = {
                     brand: document.getElementById('modalEventBrand').value.trim(),
                     url: document.getElementById('modalEventUrl').value.trim(),
-                    start_date: document.getElementById('modalEventStartDate').value.trim(),
-                    end_date: document.getElementById('modalEventEndDate').value.trim(),
+                    start_date: parseFlexibleDate(document.getElementById('modalEventStartDate').value),
+                    end_date: parseFlexibleDate(document.getElementById('modalEventEndDate').value),
                     detail: finalDetail,
                     user_name: inputUserName || null
                 };
