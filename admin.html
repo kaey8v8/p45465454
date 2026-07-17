@@ -922,7 +922,12 @@
                     // 2. 將報告狀態改為 'approved' (或者直接刪除該行)
                     // 注意：這裡改用 .delete() 比較乾淨，直接從佇列移除
                     await supabaseClient.from('issue_reports').delete().eq('id', reportId);
+                    const { error } = await supabaseClient
+                            .from('issue_reports')
+                            .delete()
+                            .eq('id', reportId);
                     
+                    if (error) throw error; // 確保有拋出錯誤讓你知道發生什麼事
                     alert("核可成功！");
                     refreshAllData(); // 重新整理後，佇列就會消失
                 } catch (e) { alert("入庫失敗：" + e.message); }
@@ -1098,9 +1103,10 @@
                     .eq('id', reportId);
                 
                 if (error) throw error;
-                
+                alert("執行成功！");
                 refreshAllData(); // 成功後務必執行這個來重繪介面
             } catch (e) { 
+                alert("操作失敗，請查看 Console： " + e.message);
                 alert("忽略失敗：" + e.message); 
             }
         }
