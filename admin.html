@@ -1055,6 +1055,7 @@
         }
 
         async function rejectSubmission(type, id) {
+            console.log("拒絕按鈕被按下了！目標類型：", type, "目標ID：", id); 
             if (!confirm("確定要拒絕並刪除投稿嗎？")) return;
             try {
                     // 新投稿的類型在 pendingDrinks/pendingEvents 中對應的表是 _submissions
