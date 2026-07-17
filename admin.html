@@ -1053,18 +1053,44 @@
                 refreshAllData();
             } catch (e) { alert("操作失敗：" + e.message); }
         }
-
         async function rejectSubmission(type, id) {
-            console.log("拒絕按鈕被按下了！目標類型：", type, "目標ID：", id); 
+            console.log("拒絕按鈕被按下了！目標類型：", type, "目標ID：", id);
+            
             if (!confirm("確定要拒絕並刪除投稿嗎？")) return;
+            
             try {
-                    // 新投稿的類型在 pendingDrinks/pendingEvents 中對應的表是 _submissions
-                    const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
-                    const { error } = await supabaseClient.from(targetTable).delete().eq('id', id);
-                    if (error) throw error;
-                    refreshAllData(); // 成功後重繪畫面
-                } catch (e) { alert("操作失敗：" + e.message); }
+                const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
+                console.log("準備刪除資料表:", targetTable, "ID:", id);
+                
+                const { data, error } = await supabaseClient
+                    .from(targetTable)
+                    .delete()
+                    .eq('id', id);
+                    
+                if (error) {
+                    console.error("Supabase 錯誤詳情:", error); // 這裡會抓到具體的 DB 錯誤
+                    alert("資料庫錯誤：" + error.message);
+                    return;
+                }
+                
+                alert("已成功拒絕！");
+                refreshAllData();
+                
+            } catch (e) {
+                console.error("程式邏輯錯誤:", e);
+                alert("程式執行錯誤：" + e);
             }
+        }
+        // async function rejectSubmission(type, id) {
+        //     if (!confirm("確定要拒絕並刪除投稿嗎？")) return;
+        //     try {
+        //             // 新投稿的類型在 pendingDrinks/pendingEvents 中對應的表是 _submissions
+        //             const targetTable = type === 'drink' ? 'drink_submissions' : 'event_submissions';
+        //             const { error } = await supabaseClient.from(targetTable).delete().eq('id', id);
+        //             if (error) throw error;
+        //             refreshAllData(); // 成功後重繪畫面
+        //         } catch (e) { alert("操作失敗：" + e.message); }
+        //     }
 
         async function ignoreReport(reportId) {
             if (!confirm("確定要忽略此勘誤回報嗎？")) return;
