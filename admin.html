@@ -1066,10 +1066,18 @@
         async function ignoreReport(reportId) {
             if (!confirm("確定要忽略此勘誤回報嗎？")) return;
             try {
-                const { error } = await supabaseClient.from('issue_reports').update({ status: 'rejected' }).eq('id', reportId);
+                // 使用 delete() 移除資料列
+                const { error } = await supabaseClient
+                    .from('issue_reports')
+                    .delete()
+                    .eq('id', reportId);
+                
                 if (error) throw error;
-                refreshAllData();
-            } catch (e) { alert("操作失敗：" + e.message); }
+                
+                refreshAllData(); // 成功後務必執行這個來重繪介面
+            } catch (e) { 
+                alert("忽略失敗：" + e.message); 
+            }
         }
 
         async function overwriteAndApprove(reportId) {
