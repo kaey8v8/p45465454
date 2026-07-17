@@ -485,8 +485,13 @@
                 // 處理右側混合審核資料
                 const pendingDrinks = localDrinks.filter(d => d.status === 'pending').map(item => ({ ...item, reviewType: 'newDrink' }));
                 const pendingEvents = localEvents.filter(ev => ev.status === 'pending').map(item => ({ ...item, reviewType: 'newEvent' }));
-                const parsedReports = localReports.map(item => ({ ...item, reviewType: 'report' }));
-
+                
+                // 將 report_type 為 'new' 的標記為 'newSubmission'
+                const parsedReports = localReports.map(item => ({ 
+                    ...item, 
+                    reviewType: item.report_type === 'new' ? 'newSubmission' : 'report' 
+                }));
+        
                 allPendingItems = [...parsedReports, ...pendingDrinks, ...pendingEvents].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
                 document.getElementById('countActiveEvents').innerText = approvedEvents.length;
@@ -792,7 +797,7 @@
             }
         }
 
-        // 渲染右側綜合審核清單 (同樣移除橫槓、並進行排版最佳化)
+        // 渲染右側綜合審核清單 
         function renderUnifiedReviewList() {
             const reportContainer = document.getElementById('reportListContainer');
             if (!reportContainer) return;
@@ -809,117 +814,92 @@
                     ? `<span class="text-[10px] text-gray-500 font-bold bg-white px-2 py-0.5 rounded border border-gray-200 truncate max-w-[80px]" title="${item.user_name}">${item.user_name}</span>`
                     : `<span class="text-[10px] text-gray-400 font-normal italic">匿名</span>`;
 
+
+                // 處理新投稿 (新增品項/活動)
+                if (item.reviewType === 'newSubmission') {
+                    const isDrink = item.target_type === 'drink';
+                    return `
+                        <div class="p-3.5 bg-green-50/50 rounded-xl border border-green-200 space-y-2 shadow-xs">
+                            <div class="flex justify-between items-center text-[10px]">
+                                <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-bold">${isDrink ? '🥤 新增飲料' : '🎁 新增活動'}</span>
+                                <span class="text-gray-400">${itemDate}</span>
+                            </div>
+                            <div class="text-xs text-gray-700">
+                                <div><strong>名稱：</strong> ${isDrink ? item.drink_name : item.event_brand}</div>
+                                <div><strong>細節：</strong> ${isDrink ? (item.drink_remark || '無') : (item.event_detail || '無')}</div>
+                            </div>
+                            <div class="flex justify-end">${authorHTML}</div>
+                            <button onclick="approveNewSubmission(${item.id})" class="w-full bg-green-600 text-white text-xs font-semibold py-1.5 rounded-lg hover:bg-green-700">核可入庫</button>
+                        </div>
+                    `;
+                }
+// 2. 勘誤回報邏輯 
                 if (item.reviewType === 'report') {
                     const targetTypeLabel = item.target_type === 'drink' ? '🍹 飲料勘誤' : '🎉 活動勘誤';
-                    let originalContent = "查無或已被刪除";
+                    
+                    // 查詢原資料
+                    let originalContent = "查無資料";
                     if (item.target_type === 'drink') {
                         const matched = localDrinks.find(d => d.id === item.target_id);
-                        if (matched) originalContent = `名稱: ${matched.name} (${matched.price}元) [標籤: ${matched.category_tags || '無'}]`;
+                        if (matched) originalContent = `原名: ${matched.name} | 原價: ${matched.price}元`;
                     } else {
                         const matched = localEvents.find(ev => ev.id === item.target_id);
-                        if (matched) originalContent = `品牌: ${matched.brand} / 時間: ${matched.start_date || '未填'}`;
+                        if (matched) originalContent = `原品牌: ${matched.brand}`;
                     }
-
-                    let newReportedContent = "";
-                    if (item.target_type === 'drink') {
-                        newReportedContent = `
-                            <div class="text-[11px] font-bold text-amber-800">回報更新內容：</div>
-                            <div class="space-y-1 text-xs mt-1 bg-white/80 p-2 rounded-lg border border-amber-200/50">
-                                <div>品項：${item.drink_name || '<span class="text-gray-400">未變更</span>'}</div>
-                                <div>價格：${item.drink_price !== null ? item.drink_price + ' 元' : '<span class="text-gray-400">未變更</span>'}</div>
-                                <div>標籤：<span class="text-blue-600 font-medium">${item.drink_category_tags || '<span class="text-gray-400">未變更</span>'}</span></div>
-                                <div class="text-[11px] text-amber-700 mt-1 pt-1 border-t border-dashed border-amber-200">原因：${item.drink_remark || '無'}</div>
-                            </div>
-                        `;
-                    } else {
-                        newReportedContent = `
-                            <div class="text-[11px] font-bold text-amber-800">回報更新內容：</div>
-                            <div class="space-y-1 text-xs mt-1 bg-white/80 p-2 rounded-lg border border-amber-200/50">
-                                <div class="truncate">品牌：${item.event_brand || '<span class="text-gray-400">未變更</span>'}</div>
-                                <div class="text-[11px]">原因：${item.event_detail || '無'}</div>
-                            </div>
-                        `;
-                    }
-
+        
                     return `
-                        <div class="p-3.5 bg-amber-50/70 rounded-xl border border-amber-200 space-y-2.5 relative shadow-xs">
+                        <div class="p-3.5 bg-amber-50/70 rounded-xl border border-amber-200 space-y-2.5 shadow-xs">
                             <div class="flex justify-between items-center text-[10px]">
                                 <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">${targetTypeLabel}</span>
                                 <span class="text-gray-400">${itemDate}</span>
                             </div>
                             <div class="text-[11px] bg-gray-100/90 p-2 rounded text-gray-500 border border-gray-200">
-                                <strong class="text-gray-700 block">當前原資料庫內容：</strong>${originalContent}
+                                <strong class="text-gray-700 block">原資料：</strong>${originalContent}
                             </div>
-                            ${newReportedContent}
-                            <div class="flex justify-end items-center mt-1">
-                                ${authorHTML}
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 pt-1">
-                                <button onclick="ignoreReport(${item.id})" class="bg-white text-gray-600 text-xs py-1.5 rounded-lg border border-gray-200 transition text-center font-medium">忽略</button>
-                                <button onclick="overwriteAndApprove(${item.id})" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold py-1.5 rounded-lg shadow-sm text-center">覆蓋原資料</button>
-                            </div>
-                        </div>
-                    `;
-
-                } else if (item.reviewType === 'newDrink') {
-                    return `
-                        <div class="p-3.5 bg-green-50/50 rounded-xl border border-green-200 space-y-2.5 shadow-xs">
-                            <div class="flex justify-between items-center text-[10px]">
-                                <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-bold">新增品項</span>
-                                <span class="text-gray-400">${itemDate}</span>
-                            </div>
-                            <div class="text-xs space-y-1 text-gray-700">
-                                <div><strong>名稱：</strong> <span class="text-gray-900 font-bold">${item.name}</span></div>
-                                <div><strong>價格：</strong> <span class="text-green-600 font-extrabold">${item.price} 元</span></div>
-                                <div><strong>標籤：</strong> <span class="text-blue-600 font-medium">${item.category_tags || '無'}</span></div>
-                                <div class="bg-white p-2 rounded border border-green-100 text-[11px]"><strong>備註：</strong> ${item.remark || '無'}</div>
-                            </div>
-                            <div class="flex justify-end items-center mt-1">
-                                ${authorHTML}
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 pt-1">
-                                <button onclick="rejectSubmission('drink', ${item.id})" class="bg-white text-gray-600 text-xs py-1.5 rounded-lg border border-gray-200 text-center font-medium">拒絕</button>
-                                <button onclick="approveSubmission('drink', ${item.id})" class="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-1.5 rounded-lg text-center">核可</button>
-                            </div>
-                        </div>
-                    `;
-                } else if (item.reviewType === 'newEvent') {
-                    const linkHTML = item.url 
-                        ? `<a href="${item.url}" target="_blank" class="text-[10px] text-blue-600 hover:text-blue-800 hover:underline font-bold flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 transition">
-                            <svg class="w-3 h-3 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                            </svg>
-                            連結官網
-                           </a>` 
-                        : '';
-
-                    return `
-                        <div class="p-3.5 bg-blue-50/50 rounded-xl border border-blue-200 space-y-2.5 shadow-xs">
-                            <div class="flex justify-between items-center text-[10px]">
-                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">新增活動</span>
-                                <span class="text-gray-400">${itemDate}</span>
-                            </div>
-                            <div class="text-xs space-y-1 text-gray-700">
-                                <div class="flex justify-between items-center gap-2">
-                                    <strong>品牌活動：</strong> <span class="text-gray-900 font-bold truncate">${item.brand}</span>
-                                    ${linkHTML}
-                                </div>
-                                <div class="bg-white p-2 rounded border border-blue-100 text-[11px] mt-1.5"><strong>細節：</strong> ${item.detail || '無'}</div>
-                            </div>
-                            <div class="flex justify-end items-center mt-1">
-                                ${authorHTML}
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 pt-1">
-                                <button onclick="rejectSubmission('event', ${item.id})" class="bg-white text-gray-600 text-xs py-1.5 rounded-lg border border-gray-200 text-center font-medium">拒絕</button>
-                                <button onclick="approveSubmission('event', ${item.id})" class="bg-blue-600 hover:bg-green-700 text-white text-xs font-semibold py-1.5 rounded-lg text-center">核可</button>
+                            <div class="text-[11px] text-amber-800 font-bold">回報變更：${item.drink_name || item.event_brand || '內容更新'}</div>
+                            <div class="flex justify-end">${authorHTML}</div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="ignoreReport(${item.id})" class="bg-white text-gray-600 text-xs py-1.5 rounded-lg border border-gray-200">忽略</button>
+                                <button onclick="overwriteAndApprove(${item.id})" class="bg-amber-500 text-white text-xs font-semibold py-1.5 rounded-lg">覆蓋原資料</button>
                             </div>
                         </div>
                     `;
                 }
+                return '';
             }).join('');
         }
-
+        // 處理新投稿核可入庫 (新增函數)
+        async function approveNewSubmission(reportId) {
+            if (!confirm("確定要將此新投稿核可正式上架嗎？")) return;
+            
+            const report = allPendingItems.find(i => i.id === reportId);
+            const targetTable = report.target_type === 'drink' ? 'drink_submissions' : 'event_submissions';
+            
+            const newEntry = report.target_type === 'drink' ? {
+                name: report.drink_name,
+                price: report.drink_price,
+                category_tags: report.drink_category_tags,
+                remark: report.drink_remark,
+                user_name: report.user_name,
+                status: 'approved'
+            } : {
+                brand: report.event_brand,
+                url: report.event_url,
+                detail: report.event_detail,
+                user_name: report.user_name,
+                status: 'approved'
+            };
+        
+            try {
+                const { error: insertError } = await supabaseClient.from(targetTable).insert([newEntry]);
+                if (insertError) throw insertError;
+        
+                await supabaseClient.from('issue_reports').update({ status: 'approved' }).eq('id', reportId);
+                
+                alert("核可成功！");
+                refreshAllData();
+            } catch (e) { alert("入庫失敗：" + e.message); }
+        }
         // ==================== 彈窗編輯處理 ====================
         function openEditModal(type, id) {
             document.getElementById('editItemType').value = type;
