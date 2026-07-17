@@ -1139,6 +1139,8 @@
                     const original = localEvents.find(e => Number(e.id) === targetId) || {};
                     overwritePayload = {
                         brand: report.event_brand ? report.event_brand.trim() : original.brand,
+                        start_date: report.event_start_date ? report.event_start_date.trim() : original.start_date,
+                        end_date: report.event_end_date ? report.event_end_date.trim() : original.end_date,
                         detail: report.event_detail ? report.event_detail.trim() : original.detail,
                         user_name: report.user_name || original.user_name
                     };
