@@ -1,3 +1,16 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理員審核後台</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+
 <!-- 註冊表單結構 -->
 <input type="email" id="signupEmail" placeholder="Email" class="...">
 <input type="password" id="signupPassword" placeholder="密碼" class="...">
@@ -5,6 +18,7 @@
 
 <script>
     async function handleSignUp() {
+        console.log(window.supabase);
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
 
