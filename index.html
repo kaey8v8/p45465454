@@ -1396,34 +1396,60 @@
         });
 
         window.onload = initData;
-        // 抽抽樂時間時程表配置
-        const luckyPeriods = [
-            { end: "2026-07-16T19:00:00", activeStr: "7/19(19:00)", redeemStr: "7/19(23:59)" }, // 緩衝或備用
-            { end: "2026-07-16T19:00:00", activeStr: "7/16(19:00)", redeemStr: "7/16(23:59)" },
-            { end: "2026-07-19T19:00:00", activeStr: "7/19(19:00)", redeemStr: "7/19(23:59)" },
-            { end: "2026-07-23T19:00:00", activeStr: "7/23(19:00)", redeemStr: "7/23(23:59)" },
-            { end: "2026-07-26T19:00:00", activeStr: "7/26(19:00)", redeemStr: "7/26(23:59)" },
-            { end: "2026-07-30T19:00:00", activeStr: "7/30(19:00)", redeemStr: "7/30(23:59)" },
-            { end: "2026-08-02T19:00:00", activeStr: "8/2(19:00)", redeemStr: "8/2(23:59)" },
-            { end: "2026-08-06T19:00:00", activeStr: "8/6(19:00)", redeemStr: "8/6(23:59)" },
-            { end: "2026-08-09T19:00:00", activeStr: "8/9(19:00)", redeemStr: "8/9(23:59)" },
-            { end: "2026-08-13T19:00:00", activeStr: "8/13(19:00)", redeemStr: "8/13(23:59)" },
-            { end: "2026-08-16T19:00:00", activeStr: "8/16(19:00)", redeemStr: "8/16(23:59)" },
-            { end: "2026-08-20T19:00:00", activeStr: "8/20(19:00)", redeemStr: "8/20(23:59)" },
-            { end: "2026-08-23T19:00:00", activeStr: "8/23(19:00)", redeemStr: "8/23(23:59)" },
-            { end: "2026-08-27T19:00:00", activeStr: "8/27(19:00)", redeemStr: "8/27(23:59)" },
-            { end: "2026-08-30T19:00:00", activeStr: "8/30(19:00)", redeemStr: "8/30(23:59)" },
-            { end: "2026-09-01T19:00:00", activeStr: "9/1(19:00)", redeemStr: "9/1(23:59)" }
-        ];
-        
-        // 取得當下時間對應的活動截止日期
-        function getCurrentLuckyPeriod() {
-            const now = new Date();
-            // 尋找第一個「當前時間小於等於活動結束時間」的區間
-            let match = luckyPeriods.find(p => now <= new Date(p.end));
-            // 如果全部都過期了，預設回傳最後一檔
-            return match || luckyPeriods[luckyPeriods.length - 1];
+        // ==========================================
+        // 🌟 全局變數定義與初始化整合
+        // ==========================================
+        let eventSchedulesData = null; // 存放從 GitHub 載入的完整活動資訊表
+
+        // 網頁載入時的總初始化
+        window.onload = async function() {
+            // 1. 執行原本 Supabase 資料的初始化
+            await initData();
+            
+            // 2. 執行從 GitHub 背景載入完整活動資訊表
+            await loadEventSchedules();
+        };
+
+        // 從 GitHub 非同步載入活動資訊表 JSON
+        async function loadEventSchedules() {
+            try {
+                // ⚠️ 請記得將下方網址替換成你實際在 GitHub 上的 Raw 原始網址
+                const gitHubRawUrl = "https://raw.githubusercontent.com/你的帳號/你的專案/main/event_schedules.json";
+                const response = await fetch(gitHubRawUrl);
+                eventSchedulesData = await response.json();
+                console.log("🎯 成功從 GitHub 載入完整活動資訊表");
+            } catch (error) {
+                console.error("無法載入活動資訊表，啟用在地緊急預備值", error);
+                // 應急防呆：萬一 GitHub 掛掉，至少提供一筆基本時程讓網頁不崩潰
+                eventSchedulesData = {
+                    title: "7-11 天天抽飲料 ~ 9/1",
+                    links: { "line": "https://wooo.tw/qFjU69V", "app": "https://wooo.tw/PRckgXA" },
+                    timelines: [{ "end": "2026-09-01T19:00:00", "activeStr": "9/1(19:00)", "redeemStr": "9/1(23:59)" }],
+                    partner_activities: [],
+                    notices: [
+                        { "icon": "💡", "text": "確認金額、品項、抽抽樂折扣沒問題，再出示各種支付方式給店員刷。", "isRed": false },
+                        { "icon": "🚨", "text": "如果發現有誤再麻煩好心人送出勘誤資訊，管理員會盡快處理。", "isRed": false },
+                        { "icon": "⚠️", "text": "本資料表為多人心血，請勿用於營利。", "isRed": true }
+                    ],
+                    discounts: [],
+                    point_rewards: []
+                };
+            }
         }
+
+        // 🌟 修復：自動比對當前時間，抓出符合的活動區間資訊
+        function getCurrentTimeline(timelines) {
+            if (!timelines || timelines.length === 0) return { activeStr: "載入中...", redeemStr: "載入中..." };
+            const now = new Date();
+            // 尋找第一個當前時間尚未超過結束時間的活動時程
+            let match = timelines.find(t => now <= new Date(t.end));
+            // 如果所有活動時間都過期了，預設回傳最後一筆
+            return match || timelines[timelines.length - 1];
+        }
+
+        // ==========================================
+        // 🌟 頁面切換與渲染邏輯
+        // ==========================================
         function globalSwitch(type) {
             currentView = type;
             const isDrink = type === 'drink';
@@ -1441,7 +1467,7 @@
             document.getElementById('toggleFilterBtn').classList.toggle('hidden', !isDrink);
             document.getElementById('eventSortContainer').classList.toggle('hidden', !isEvent);
             
-            // 🌟 抽抽樂分頁不顯示上方的搜尋與新增控制列
+            // 抽抽樂分頁不顯示上方的搜尋與新增控制列
             document.getElementById('searchBarControls').classList.toggle('hidden', isLucky);
         
             if (!isDrink) {
@@ -1475,11 +1501,13 @@
             document.getElementById('searchInput').value = "";
             clearDrinkFilters();
         
-            // 🌟 如果切換到抽抽樂，動態渲染內容
+            // 如果切換到抽抽樂，動態渲染內容
             if (isLucky) {
                 renderLuckyTab();
             }
         }
+
+        // 全動態渲染「飲料抽抽樂」頁籤的函數
         function renderLuckyTab() {
             const container = document.getElementById('luckyViewSection');
             
@@ -1499,7 +1527,7 @@
                 </div>
             `).join('');
         
-            // 🌟 新增：動態生成溫馨提示與警語區
+            // 動態生成溫馨提示與警語區
             const noticesHTML = eventSchedulesData.notices.map(notice => `
                 <p class="${notice.isRed ? 'text-red-500 font-bold' : ''}">
                     ${notice.icon} ${notice.text}
@@ -1561,7 +1589,6 @@
                         <div class="divide-y divide-gray-200 text-xs bg-white">${partnerHTML}</div>
                     </div>
         
-                    <!-- 🌟 升級：完全由 JSON 動態控制的提示與警語區塊 -->
                     <div class="bg-amber-50/60 border border-amber-100 rounded-xl p-3.5 text-xs text-gray-600 space-y-1 leading-relaxed">
                         ${noticesHTML}
                     </div>
@@ -1586,7 +1613,10 @@
                 </div>
             `;
         }
-        // 處理按讚按鈕點擊 (LocalStorage 鎖定，每人每品項限按一次)
+
+        // ==========================================
+        // 🌟 愛心計數器與商品列表渲染
+        // ==========================================
         async function toggleLikeDrink(id) {
             const storageKey = `liked_drink_${id}`;
             if (localStorage.getItem(storageKey)) {
@@ -1594,18 +1624,14 @@
                 return;
             }
         
-            // 尋找目標商品
             const drink = allDrinks.find(d => d.id === id);
             if (!drink) return;
         
-            // 前端即時數值累加 (Optimistic UI)
             drink.likes = (drink.likes || 0) + 1;
             filterAndRender();
         
-            // 寫入 LocalStorage 防止重複點選
             localStorage.setItem(storageKey, 'true');
         
-            // 發送更新至 Supabase
             const { error } = await supabaseClient
                 .from('drink_submissions')
                 .update({ likes: drink.likes })
@@ -1613,14 +1639,12 @@
         
             if (error) {
                 console.error("更新讚數失敗:", error);
-                // 若資料庫寫入失敗，則回滾前端數值
                 drink.likes -= 1;
                 localStorage.removeItem(storageKey);
                 filterAndRender();
             }
         }
         
-        // 修改後的商品渲染函數
         function renderDrinks(data) {
             const container = document.getElementById('drinkViewSection');
             if (data.length === 0) {
@@ -1653,7 +1677,6 @@
                     ? `<span class="text-[10px] text-gray-400 font-normal truncate max-w-[48px]" title="${item.user_name}">${item.user_name}</span>`
                     : `<span class="text-[10px] text-gray-300 font-normal italic">匿名</span>`;
         
-                // 🌟 檢查本裝置是否按過讚，動態改變愛心顏色
                 const hasLiked = localStorage.getItem(`liked_drink_${item.id}`);
                 const heartColorClass = hasLiked ? 'text-red-500 fill-current' : 'text-gray-400 hover:text-red-500';
                 const likesCount = item.likes || 0;
@@ -1674,7 +1697,6 @@
                           </div>
                       </div>
                       
-                      <!-- 🌟 側邊功能操作直列：包含勘誤、愛心、署名 -->
                       <div class="flex flex-col items-center justify-between shrink-0 w-12 text-center py-0.5 border-l border-gray-200/60 pl-2">
                           <button onclick="openIssueModal('drink', ${item.id})" 
                                   class="text-red-500 hover:text-red-600 hover:scale-110 active:scale-95 transition-all p-0.5 cursor-pointer" 
@@ -1686,7 +1708,6 @@
                             </svg>
                           </button>
                           
-                          <!-- 🌟 新增：愛心計數器按鈕 -->
                           <button onclick="toggleLikeDrink(${item.id})" 
                                   class="${heartColorClass} hover:scale-120 active:scale-90 transition-all p-0.5 cursor-pointer flex flex-col items-center justify-center group" 
                                   title="喜歡這個商品">
