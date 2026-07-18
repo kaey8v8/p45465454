@@ -17,7 +17,13 @@
             <h1 class="text-lg font-bold text-green-600 flex items-center gap-1.5">
                 🥤 <span>7-11 飲料抽抽樂情報站</span>
             </h1>
-            <a href="admin.html" class="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition">管理登入</a>
+            <a href="admin.html" class="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition inline-flex items-center gap-1.5">
+                <svg style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                管理登入
+            </a>
         </div>
     </header>
 
@@ -30,11 +36,11 @@
                     🥤 適用商品查詢
                 </button>
                 <button id="viewTabEvent" onclick="globalSwitch('event')" class="flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition">
-                    🎁 品牌抽獎活動
+                    🎁 品牌登錄活動
                 </button>
                 <!-- 新增：等待審核清單分頁按鈕 -->
                 <button id="viewTabPending" onclick="globalSwitch('pending')" class="flex-1 py-3 text-center text-sm font-medium border-b-2 border-transparent text-gray-400 transition">
-                    📝 待審名單
+                    📝 待確認
                 </button>
             </div>
 
@@ -48,7 +54,11 @@
                     <div id="filterToggleWrapper" class="flex items-center gap-2">
                         <!-- 飲料分頁專用：篩選與排序摺疊按鈕 -->
                         <button id="toggleFilterBtn" onclick="toggleCollapseFilter()" class="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-2 rounded-lg transition border border-gray-200 shadow-xs whitespace-nowrap">
-                            <span>🔍 篩選與排序</span>
+                            <svg style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="M21 21l-4.35-4.35"></path>
+                            </svg>
+                            <span> 篩選與排序</span>
                             <span id="toggleArrow" class="text-[10px] transition-transform duration-200">▼</span>
                         </button>
 
@@ -61,9 +71,15 @@
                         </div>
                     </div>
 
-                    <button onclick="openCreateModal()" id="openCreateBtn" class="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap shadow-xs">
-                        ➕ 新增商品
+                    <button onclick="openCreateModal()" id="openCreateBtn" class="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap shadow-xs inline-flex items-center justify-center">
+                        <span class="inline-flex items-center">
+                            <svg style="width:14px; height:14px; margin-right:4px;" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="5" stroke-linecap="round">
+                                <path d="M10 3v14M3 10h14" />
+                            </svg>
+                            新增商品
+                        </span>
                     </button>
+                    
                 </div>
 
                 <!-- 飲料分類、糖分與排序 摺疊容器 -->
@@ -76,10 +92,10 @@
                                 <button onclick="toggleFilterTag(this, '茶')" class="drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition">茶</button>
                                 <button onclick="toggleFilterTag(this, '水')" class="drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition">水</button>
                                 <button onclick="toggleFilterTag(this, '咖啡')" class="drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition">咖啡</button>
-                                <button onclick="toggleFilterTag(this, '能量飲')" class="drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition">能量飲</button>
+                                <button onclick="toggleFilterTag(this, '能量飲')" class="drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition">運動/能量飲</button>
                                 <button onclick="toggleFilterTag(this, '乳/豆')" class="drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition">乳/豆</button>
                                 <button onclick="toggleFilterTag(this, '果汁')" class="drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition">果汁</button>
-                                <button onclick="toggleFilterTag(this, '其他')" class="drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition">其他</button>
+                                <button onclick="toggleFilterTag(this, '其他')" class="drink-tag-btn px-3 py-1 text-xs rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition">氣泡/碳酸</button>
                             </div>
                         </div>
 
@@ -105,8 +121,14 @@
                                     </button>
                                 </div>
                             </div>
-                            <button onclick="clearDrinkFilters()" class="text-xs font-semibold text-red-500 hover:text-red-700 transition flex items-center gap-1">
-                                🔄 重設所有篩選條件
+                            <button onclick="clearDrinkFilters()" class="text-xs font-semibold text-blue-600 hover:text-blue-800 transition flex items-center gap-1">
+                                <svg style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                    <path d="M3 3v5h5" />
+                                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                                    <path d="M21 21v-5h-5" />
+                                </svg>
+                                重設所有篩選條件
                             </button>
                         </div>
                     </div>
@@ -145,11 +167,11 @@
         </section>
     </main>
 
-    <!-- ➕ 熱心新增商品/活動彈窗 (Modal) -->
+    <!-- 新增商品/活動彈窗 (Modal) -->
     <div id="createModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl border border-gray-200 max-w-md w-full p-5 shadow-2xl overflow-y-auto max-h-[90vh] relative">
             <div class="flex justify-between items-center pb-2 border-b border-gray-100">
-                <h3 id="createModalTitle" class="font-bold text-gray-800 text-sm">✍️ 發現新情報？</h3>
+                <h3 id="createModalTitle" class="font-bold text-gray-800 text-sm">✍️ 建立新商品</h3>
                 <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-600 text-sm">✕</button>
             </div>
 
@@ -157,15 +179,15 @@
             <form id="drinkForm" class="space-y-3 mt-4" onsubmit="submitFormLogic(event, 'drink')">
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 mb-1">商品名稱 *</label>
-                    <input type="text" name="name" required placeholder="例如：純在芒果甘露" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-green-500">
+                    <input type="text" name="name" required placeholder="原萃日式綠茶" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-green-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1">單瓶價格 (上限 $500) *</label>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">單瓶價格 *</label>
                     <input type="number" name="price" max="500" required placeholder="65" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-green-500">
                 </div>
                 <!-- 商品分類標籤 -->
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1">🧋 商品分類 (可多選) </label>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">🧋 商品分類 </label>
                     <div class="grid grid-cols-3 gap-1.5 bg-gray-50 p-2 rounded-lg border border-gray-200 text-[11px]">
                         <label class="flex items-center gap-1.5 p-1 hover:bg-gray-150 rounded cursor-pointer">
                             <input type="checkbox" name="drink_category_tags" value="茶" onchange="syncCreateDrinkCategoryTags()" class="rounded text-green-600 focus:ring-green-400">
@@ -180,8 +202,8 @@
                             <span>咖啡</span>
                         </label>
                         <label class="flex items-center gap-1.5 p-1 hover:bg-gray-150 rounded cursor-pointer">
-                            <input type="checkbox" name="drink_category_tags" value="能量飲" onchange="syncCreateDrinkCategoryTags()" class="rounded text-green-600 focus:ring-green-400">
-                            <span>能量飲</span>
+                            <input type="checkbox" name="drink_category_tags" value="運動/能量飲" onchange="syncCreateDrinkCategoryTags()" class="rounded text-green-600 focus:ring-green-400">
+                            <span>運動/能量飲</span>
                         </label>
                         <label class="flex items-center gap-1.5 p-1 hover:bg-gray-150 rounded cursor-pointer">
                             <input type="checkbox" name="drink_category_tags" value="乳/豆" onchange="syncCreateDrinkCategoryTags()" class="rounded text-green-600 focus:ring-green-400">
@@ -192,8 +214,8 @@
                             <span>果汁</span>
                         </label>
                         <label class="flex items-center gap-1.5 p-1 hover:bg-gray-150 rounded cursor-pointer">
-                            <input type="checkbox" name="drink_category_tags" value="其他" onchange="syncCreateDrinkCategoryTags()" class="rounded text-green-600 focus:ring-green-400">
-                            <span>其他</span>
+                            <input type="checkbox" name="drink_category_tags" value="氣泡/碳酸" onchange="syncCreateDrinkCategoryTags()" class="rounded text-green-600 focus:ring-green-400">
+                            <span>氣泡/碳酸</span>
                         </label>
                         <label class="flex items-center gap-1.5 p-1 hover:bg-gray-150 rounded cursor-pointer">
                             <input type="checkbox" name="drink_category_tags" value="有糖" onchange="syncCreateDrinkCategoryTags()" class="rounded text-green-600 focus:ring-green-400">
@@ -207,7 +229,7 @@
                 </div>
                 <!-- 飲料促銷/活動標籤複選框 -->
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1">🎁 活動/促銷 (可多選)</label>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">🎁 活動/促銷 </label>
                     <div class="grid grid-cols-2 gap-1.5 bg-gray-50 p-2 rounded-lg border border-gray-200 text-[11px]">
                         <label class="flex items-center space-x-2 cursor-pointer p-1 hover:bg-gray-100 rounded">
                             <input type="checkbox" name="drink_tags" value="買一送一" onchange="syncCreateDrinkTags()" class="rounded text-amber-600 focus:ring-amber-500">
@@ -232,13 +254,12 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1">已選活動標籤預覽</label>
                     <div id="createDrinkTagContainer" class="flex flex-wrap gap-1.5 p-2 bg-amber-50/50 border border-amber-100 rounded-lg min-h-[35px]">
-                        <span class="text-[11px] text-gray-400 italic">尚未勾選任何活動標籤...</span>
+                        <span class="text-[11px] text-gray-400 italic">標籤預覽</span>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1">備註說明 (Remark)</label>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">備註說明</label>
                     <textarea id="createDrinkRemark" name="remark" rows="2" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-green-500" placeholder="例如：特價只到本週日" oninput="syncCreateDrinkTags()"></textarea>
                 </div>
                 <!-- 署名欄位 (飲料) -->
@@ -248,7 +269,7 @@
                 </div>
                 <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
                     <button type="button" onclick="closeCreateModal()" class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs hover:bg-gray-200 transition font-medium">取消</button>
-                    <button type="submit" class="px-4 py-1.5 bg-green-600 text-white font-semibold rounded-lg text-xs hover:bg-green-700 transition shadow-sm">提交飲料審核</button>
+                    <button type="submit" class="px-4 py-1.5 bg-green-600 text-white font-semibold rounded-lg text-xs hover:bg-green-700 transition shadow-sm">提交商品審核</button>
                 </div>
             </form>
 
@@ -256,10 +277,10 @@
             <form id="eventForm" class="space-y-3 mt-4 hidden" onsubmit="submitFormLogic(event, 'event')">
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 mb-1">品牌活動名稱 *</label>
-                    <input type="text" name="brand" required placeholder="例如：可口可樂" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-blue-500">
+                    <input type="text" name="brand" required placeholder="原萃金蓋" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1">情報連結 URL *</label>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">網址 *</label>
                     <input type="url" name="url" required placeholder="https://..." class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-blue-500">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
@@ -268,12 +289,12 @@
                         <input type="text" name="start_date" placeholder="2026-01-01" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1">截止日期 *</label>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">結束日期 *</label>
                         <input type="text" name="end_date" placeholder="2026-01-01" required class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-blue-500">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1">🏷️ 標籤 (可多選)</label>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">🏷️ 標籤 </label>
                     <div class="grid grid-cols-3 gap-1.5 bg-gray-50 p-2 rounded-lg border border-gray-200 text-[11px]">
                         <label class="flex items-center space-x-1.5 cursor-pointer p-1 hover:bg-gray-100 rounded">
                             <input type="checkbox" name="event_tags" value="登錄發票" onchange="syncCreateEventTags()" class="rounded text-rose-650 focus:ring-rose-400"> <span>登錄發票</span>
@@ -293,16 +314,18 @@
                         <label class="flex items-center space-x-1.5 cursor-pointer p-1 hover:bg-gray-100 rounded">
                             <input type="checkbox" name="event_tags" value="立即抽" onchange="syncCreateEventTags()" class="rounded text-rose-650 focus:ring-rose-400"> <span>立即抽</span>
                         </label>
+                        <label class="flex items-center space-x-1.5 cursor-pointer p-1 hover:bg-gray-100 rounded">
+                            <input type="checkbox" name="event_tags" value="截止時間非23:59" onchange="syncCreateEventTags()" class="rounded text-rose-650 focus:ring-rose-400"> <span>截止時間非23:59</span>
+                        </label>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1">已選活動標籤預覽</label>
                     <div id="createEventTagContainer" class="flex flex-wrap gap-1.5 p-2 bg-rose-50/50 border border-rose-100 rounded-lg min-h-[35px]">
-                        <span class="text-[11px] text-gray-400 italic">尚未勾選任何活動標籤...</span>
+                        <span class="text-[11px] text-gray-400 italic">標籤預覽</span>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1">活動細節說明 (Detail)</label>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">活動細節說明</label>
                     <textarea id="createEventDetail" name="detail" rows="3" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-blue-500" placeholder="例如：滿額 199 元加碼送周邊" oninput="syncCreateEventTags()"></textarea>
                 </div>
                 <!-- 署名欄位 (活動) -->
@@ -327,7 +350,7 @@
                 </h3>
                 <button onclick="closeIssueModal()" class="text-gray-400 hover:text-gray-600 text-sm">✕</button>
             </div>
-            <p class="text-[11px] text-gray-400 mt-1">請修正下方錯誤的欄位，以便管理員進行覆蓋審查。</p>
+            <p class="text-[11px] text-gray-400 mt-1">請修正下方錯誤的欄位，以便管理員確認。</p>
             
             <form id="issueForm" class="space-y-3 mt-4">
                 <!-- 隱藏控制項 -->
@@ -345,7 +368,7 @@
         </div>
     </div>
 
-    <!-- 幕後 JavaScript 核心邏輯 -->
+    <!-- 核心 -->
     <script>
         const SUPABASE_URL = "https://ojwryrmifoimjkkumdst.supabase.co/"; 
         const SUPABASE_ANON_KEY = "sb_publishable_aBjX88rDqNLETYznUHmFmw_3FcO0xbl";
@@ -405,7 +428,7 @@
                     id: item.id, // 保留原始 ID
                     source_table: 'drink_submissions', // 標記來源表
                     created_at: item.created_at,
-                    name: `🥤 [新增飲料] ${item.name}`,
+                    name: `🥤 [新增商品] ${item.name}`,
                     details: `價格：${item.price} 元 | 類別：${item.category_tags || '無'} | 備註：${item.remark || '無'}`,
                     user_name: item.user_name || '匿名'
                 }));
@@ -470,12 +493,26 @@
             if (priceDirection === '') {
                 priceDirection = 'desc'; 
                 selectedDrinkSortMode = 'price_desc';
-                btnElement.innerHTML = "<span>價格 高→低 ⬇️</span>";
+                btnElement.innerHTML = `
+                    <span class="inline-flex items-center gap-1">
+                        價格 高→低
+                        <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 5v14M5 12l7 7 7-7" />
+                        </svg>
+                    </span>
+                `;
                 btnElement.className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-green-600 bg-green-600 text-white font-semibold hover:bg-green-700 transition";
             } else if (priceDirection === 'desc') {
                 priceDirection = 'asc'; 
                 selectedDrinkSortMode = 'price_asc';
-                btnElement.innerHTML = "<span>價格 低→高 ⬆️</span>";
+                btnElement.innerHTML = `
+                    <span class="inline-flex items-center gap-1">
+                        價格 低→高
+                        <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 19V5M5 12l7-7 7 7" />
+                        </svg>
+                    </span>
+                `;
             } else {
                 priceDirection = ''; 
                 selectedDrinkSortMode = '';
@@ -493,12 +530,26 @@
             if (dateDirection === '') {
                 dateDirection = 'desc'; 
                 selectedDrinkSortMode = 'date_desc';
-                btnElement.innerHTML = "<span>日期 新→舊 ⬇️</span>";
+                btnElement.innerHTML = `
+                    <span class="inline-flex items-center gap-1">
+                        日期 新→舊
+                        <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 5v14M5 12l7 7 7-7" />
+                        </svg>
+                    </span>
+                `;
                 btnElement.className = "drink-sort-btn px-3 py-1 text-xs rounded-full border border-green-600 bg-green-600 text-white font-semibold hover:bg-green-700 transition";
             } else if (dateDirection === 'desc') {
                 dateDirection = 'asc'; 
                 selectedDrinkSortMode = 'date_asc';
-                btnElement.innerHTML = "<span>日期 舊→新 ⬆️</span>";
+                btnElement.innerHTML = `
+                    <span class="inline-flex items-center gap-1">
+                        日期 舊→新
+                        <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 19V5M5 12l7-7 7 7" />
+                        </svg>
+                    </span>
+                `;
             } else {
                 dateDirection = ''; 
                 selectedDrinkSortMode = '';
@@ -511,13 +562,26 @@
         function toggleEventDateSort(btnElement) {
             if (eventDateDirection === 'near') {
                 eventDateDirection = 'far';
-                btnElement.innerHTML = "<span>截止日 遠→近 ⬆️</span>";
-                btnElement.className = "px-3 py-1.5 border border-blue-600 bg-blue-600 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1";
+                btnElement.innerHTML = `
+                    <span class="inline-flex items-center gap-1">
+                        截止日 遠→近
+                        <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 19V5M5 12l7-7 7 7" />
+                        </svg>
+                    </span>
+                `;
             } else {
                 eventDateDirection = 'near';
-                btnElement.innerHTML = "<span>截止日 近→遠 ⬇️</span>";
-                btnElement.className = "px-3 py-1.5 border border-blue-600 bg-blue-600 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1";
+                btnElement.innerHTML = `
+                    <span class="inline-flex items-center gap-1">
+                        截止日 近→遠
+                        <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 5v14M5 12l7 7 7-7" />
+                        </svg>
+                    </span>
+                `;
             }
+            btnElement.className = "px-3 py-1.5 border border-blue-600 bg-blue-600 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1";
             filterAndRender();
         }
 
@@ -638,10 +702,10 @@
                                   class="text-red-500 hover:text-red-600 hover:scale-110 active:scale-95 transition-all p-1 cursor-pointer" 
                                   title="資訊勘誤 🚨">
                               <svg class="w-6 h-6 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M12 2v3M5.22 5.22l2.12 2.12M18.78 5.22l-2.12 2.12" />
-                                  <path d="M19 12a7 7 0 0 0-14 0v4h14v-4z" fill="currentColor" fill-opacity="0.1" />
-                                  <rect x="3" y="16" width="18" height="3" rx="1" fill="currentColor" fill-opacity="0.2" />
-                              </svg>
+                                <path d="M12 -1v3M2.79 2.79l2.12 2.12M21.21 2.79l-2.12 2.12" />
+                                <path d="M19 12a7 7 0 0 0-14 0v4h14v-4z" fill="currentColor" fill-opacity="0.1" />
+                                <rect x="3" y="16" width="18" height="3" rx="1" fill="currentColor" fill-opacity="0.2" />
+                            </svg>
                           </button>
                           ${authorHTML}
                       </div>
@@ -701,7 +765,7 @@
                                   <line x1="8" y1="2" x2="8" y2="6"></line>
                                   <line x1="3" y1="10" x2="21" y2="10"></line>
                               </svg>
-                              <span>起：${item.start_date || '即日起'} ~ 止：${item.end_date}</span>
+                              <span>${item.start_date || '即日起'} ~ ${item.end_date}</span>
                           </div>
                           ${behaviorBadgesHTML ? `<div class="flex flex-wrap gap-1 py-0.5">${behaviorBadgesHTML}</div>` : ''}
                           <div class="text-xs text-gray-600 break-all bg-white/60 p-2 rounded border border-gray-150 mt-1 max-h-[60px] overflow-y-auto">
@@ -713,7 +777,7 @@
                                   class="text-red-500 hover:text-red-600 hover:scale-110 active:scale-95 transition-all p-1 cursor-pointer" 
                                   title="資訊勘誤 🚨">
                               <svg class="w-6 h-6 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M12 2v3M5.22 5.22l2.12 2.12M18.78 5.22l-2.12 2.12" />
+                                  <path d="M12 -1v3M2.79 2.79l2.12 2.12M21.21 2.79l-2.12 2.12" />
                                   <path d="M19 12a7 7 0 0 0-14 0v4h14v-4z" fill="currentColor" fill-opacity="0.1" />
                                   <rect x="3" y="16" width="18" height="3" rx="1" fill="currentColor" fill-opacity="0.2" />
                               </svg>
@@ -823,18 +887,31 @@
             if (isDrink) {
                 document.getElementById('drinkForm').classList.remove('hidden');
                 document.getElementById('eventForm').classList.add('hidden');
-                document.getElementById('createModalTitle').innerText = "✍️ 發現漏網飲料？歡迎新增！";
-                openCreateBtn.innerText = "➕ 新增商品";
-                openCreateBtn.className = "bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap shadow-xs";
+                document.getElementById('createModalTitle').innerText = "✍️ 發現漏網商品？歡迎新增！";
+                openCreateBtn.innerHTML = `
+                  <span class="inline-flex items-center">
+                    <svg style="width:14px; height:14px; margin-right:4px;" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="5" stroke-linecap="round">
+                      <path d="M10 3v14M3 10h14" />
+                    </svg>
+                    新增商品
+                  </span>
+                `;
+                openCreateBtn.className = "bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap shadow-xs inline-flex items-center justify-center";
             } else if (isEvent) {
                 document.getElementById('drinkForm').classList.add('hidden');
                 document.getElementById('eventForm').classList.remove('hidden');
                 document.getElementById('createModalTitle').innerText = "✍️ 發現漏網活動？歡迎新增！";
-                openCreateBtn.innerText = "➕ 新增活動";
-                openCreateBtn.className = "bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap shadow-xs";
+                openCreateBtn.innerHTML = `
+                  <span class="inline-flex items-center">
+                    <svg style="width:14px; height:14px; margin-right:4px;" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="5" stroke-linecap="round">
+                      <path d="M10 3v14M3 10h14" />
+                    </svg>
+                    新增活動
+                  </span>
+                `;
+                openCreateBtn.className = "bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap shadow-xs inline-flex items-center justify-center";
             } else {
-                // 待審名單下不提供手動新增，因此隱藏此按鈕
-                openCreateBtn.innerText = "➕ 新增資料";
+                // 若不符合條件，直接強制隱藏該按鈕
                 openCreateBtn.className = "hidden";
             }
             
@@ -894,7 +971,7 @@
             checkboxes.forEach(cb => { if (cb.checked) selectedTags.push(cb.value); });
 
             if (selectedTags.length === 0) {
-                tagContainer.innerHTML = `<span class="text-[11px] text-gray-400 italic">尚未勾選任何活動標籤...</span>`;
+                tagContainer.innerHTML = `<span class="text-[11px] text-gray-400 italic">標籤預覽</span>`;
             } else {
                 tagContainer.innerHTML = selectedTags.map(tag => `
                     <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-amber-200">
@@ -923,7 +1000,7 @@
             checkboxes.forEach(cb => { if (cb.checked) selectedTags.push(cb.value); });
 
             if (selectedTags.length === 0) {
-                tagContainer.innerHTML = `<span class="text-[11px] text-gray-400 italic">尚未勾選 any 活動標籤...</span>`;
+                tagContainer.innerHTML = `<span class="text-[11px] text-gray-400 italic">標籤預覽</span>`;
             } else {
                 tagContainer.innerHTML = selectedTags.map(tag => `
                     <span class="inline-flex items-center gap-1 bg-rose-100 text-rose-800 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-rose-200">
@@ -969,7 +1046,7 @@
             checkboxes.forEach(cb => { if (cb.checked) selectedTags.push(cb.value); });
 
             if (selectedTags.length === 0) {
-                tagContainer.innerHTML = `<span class="text-[11px] text-gray-400 italic">尚未勾選任何活動標籤...</span>`;
+                tagContainer.innerHTML = `<span class="text-[11px] text-gray-400 italic">標籤預覽</span>`;
             } else {
                 tagContainer.innerHTML = selectedTags.map(tag => `
                     <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-amber-200">
@@ -1091,20 +1168,20 @@
             const fieldsContainer = document.getElementById('issueDynamicFields');
             
             if (type === 'drink') {
-                document.getElementById('issueModalTitleText').innerText = "🥤 飲料";
+                document.getElementById('issueModalTitleText').innerText = "🥤 商品";
                 const item = allDrinks.find(d => d.id === id) || { name: '', price: '', remark: '', category_tags: '' };
                 
                 fieldsContainer.innerHTML = `
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1">修正 品項名稱 *</label>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">品項名稱 *</label>
                         <input type="text" name="drink_name" value="${item.name.replace(/"/g, '&quot;')}" required class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1">修正 單瓶價格 *</label>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">單瓶價格 *</label>
                         <input type="number" name="drink_price" value="${item.price}" max="500" required class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1">🧋 修正 商品分類 (可多選)</label>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">🧋 商品分類 </label>
                         <div class="grid grid-cols-3 gap-1.5 bg-gray-50 p-2 rounded-lg border border-gray-200 text-[11px]">
                             <label class="flex items-center gap-1.5 p-1 hover:bg-gray-150 rounded cursor-pointer">
                                 <input type="checkbox" name="issue_drink_category_tags" value="茶" class="rounded text-green-600">
@@ -1119,7 +1196,7 @@
                                 <span>咖啡</span>
                             </label>
                             <label class="flex items-center gap-1.5 p-1 hover:bg-gray-150 rounded cursor-pointer">
-                                <input type="checkbox" name="issue_drink_category_tags" value="能量飲" class="rounded text-green-600">
+                                <input type="checkbox" name="issue_drink_category_tags" value="運動/能量飲" class="rounded text-green-600">
                                 <span>能量飲</span>
                             </label>
                             <label class="flex items-center gap-1.5 p-1 hover:bg-gray-150 rounded cursor-pointer">
@@ -1131,7 +1208,7 @@
                                 <span>果汁</span>
                             </label>
                             <label class="flex items-center gap-1.5 p-1 hover:bg-gray-150 rounded cursor-pointer">
-                                <input type="checkbox" name="issue_drink_category_tags" value="其他" class="rounded text-green-600">
+                                <input type="checkbox" name="issue_drink_category_tags" value="氣泡/碳酸" class="rounded text-green-600">
                                 <span>其他</span>
                             </label>
                             <label class="flex items-center gap-1.5 p-1 hover:bg-gray-150 rounded cursor-pointer">
@@ -1145,7 +1222,7 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1">修正 常用活動活動標籤</label>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">活動活動標籤</label>
                         <div class="grid grid-cols-2 gap-1.5 bg-gray-50 p-2 rounded-lg border border-gray-200 text-[11px]">
                             <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_drink_tags" value="買一送一" onchange="syncIssueDrinkTags()" class="rounded text-amber-600"> <span>買一送一</span></label>
                             <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="issue_drink_tags" value="第二件半價" onchange="syncIssueDrinkTags()" class="rounded text-amber-600"> <span>第二件半價</span></label>
@@ -1155,13 +1232,12 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1">已選標籤預覽</label>
                         <div id="issueDrinkTagContainer" class="flex flex-wrap gap-1.5 p-2 bg-amber-50/50 border border-amber-100 rounded-lg min-h-[35px]">
-                            <span class="text-[11px] text-gray-400 italic">尚未勾選任何標籤...</span>
+                            <span class="text-[11px] text-gray-400 italic">標籤預覽</span>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1">修正 其他備註</label>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">其他備註</label>
                         <textarea id="issueDrinkRemark" name="drink_remark" rows="2" placeholder="選填修正敘述" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none" oninput="syncIssueDrinkTags()"></textarea>
                     </div>
                     <!-- 🌟 勘誤署名區塊 (飲料) -->
@@ -1194,25 +1270,25 @@
                 
                 fieldsContainer.innerHTML = `
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1">修正 品牌/活動名稱 *</label>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">品牌/活動名稱 *</label>
                         <input type="text" name="event_brand" value="${item.brand.replace(/"/g, '&quot;')}" required class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1">修正 活動網址 *</label>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">活動網址 *</label>
                         <input type="url" name="event_url" value="${item.url}" required class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs font-semibold text-gray-500 mb-1">開始日期</label>
-                            <input type="date" name="event_start_date" value="${item.start_date || ''}" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none">
+                            <input type="text" name="event_start_date" value="${item.start_date || ''}" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 mb-1">截止日期 *</label>
-                            <input type="date" name="event_end_date" value="${item.end_date || ''}" required class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none">
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">結束日期 *</label>
+                            <input type="text" name="event_end_date" value="${item.end_date || ''}" required class="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1">修正 抽獎形式標籤</label>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">活動形式標籤</label>
                         <div class="grid grid-cols-3 gap-1.5 bg-gray-50 p-2 rounded-lg border border-gray-200 text-[11px]">
                             <label class="flex items-center space-x-1.5 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="登錄發票" onchange="syncIssueEventTags()" class="rounded text-rose-600"> <span>登錄發票</span></label>
                             <label class="flex items-center space-x-1.5 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="瓶蓋序號" onchange="syncIssueEventTags()" class="rounded text-rose-600"> <span>瓶蓋序號</span></label>
@@ -1220,6 +1296,7 @@
                             <label class="flex items-center space-x-1.5 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="需回函" onchange="syncIssueEventTags()" class="rounded text-rose-600"> <span>需回函</span></label>
                             <label class="flex items-center space-x-1.5 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="需簡訊" onchange="syncIssueEventTags()" class="rounded text-rose-600"> <span>需簡訊</span></label>
                             <label class="flex items-center space-x-1.5 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="立即抽" onchange="syncIssueEventTags()" class="rounded text-rose-600"> <span>立即抽</span></label>
+                            <label class="flex items-center space-x-1.5 cursor-pointer"><input type="checkbox" name="issue_event_tags" value="截止時間非23:59" onchange="syncIssueEventTags()" class="rounded text-rose-600"> <span>截止時間非23:59</span></label>
                         </div>
                     </div>
                     <div>
@@ -1276,7 +1353,7 @@
                 if (type === 'drink') {
                     const price = parseInt(e.target.querySelector('[name="drink_price"]').value, 10);
                     if (price > 500) {
-                        alert("❌ 安全警告：價格不得大於 500 元！");
+                        alert("❌ 價格不得大於 500 元！");
                         submitBtn.disabled = false;
                         submitBtn.innerText = "送出勘誤";
                         return;
@@ -1302,7 +1379,7 @@
                 const { error } = await supabaseClient.from('issue_reports').insert([payload]);
                 if (error) throw error;
 
-                alert("🚨 勘誤回報成功！管理員已收到修正規格表。");
+                alert("🚨 勘誤回報成功！管理員已收到修正資訊。");
                 closeIssueModal();
                 await fetchPendingData(); // 即時重整待審名單
                 filterAndRender();
