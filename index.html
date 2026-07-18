@@ -1481,27 +1481,70 @@
             }
         }
         function renderLuckyTab() {
-            const period = getCurrentLuckyPeriod();
             const container = document.getElementById('luckyViewSection');
             
+            if (!eventSchedulesData) {
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-8">活動資訊表同步中...</p>`;
+                return;
+            }
+        
+            const period = getCurrentTimeline(eventSchedulesData.timelines);
+        
+            // 動態生成搭配活動
+            const partnerHTML = eventSchedulesData.partner_activities.map(act => `
+                <div class="p-3 sm:flex justify-between items-start gap-4 hover:bg-gray-50/80 transition">
+                    <span class="font-bold text-gray-800 shrink-0 block sm:w-28 mb-1 sm:mb-0">${act.name}</span>
+                    <span class="text-blue-600 font-semibold shrink-0 block sm:w-36 mb-1 sm:mb-0">${act.duration}</span>
+                    <span class="text-gray-600 flex-1">${act.desc}</span>
+                </div>
+            `).join('');
+        
+            // 🌟 新增：動態生成溫馨提示與警語區
+            const noticesHTML = eventSchedulesData.notices.map(notice => `
+                <p class="${notice.isRed ? 'text-red-500 font-bold' : ''}">
+                    ${notice.icon} ${notice.text}
+                </p>
+            `).join('');
+        
+            // 動態生成活動獎項
+            const discountsHTML = eventSchedulesData.discounts.map(disc => {
+                const isCoupon = disc.type.includes('折價券');
+                return `
+                    <div class="grid grid-cols-3 p-2.5 px-3 hover:bg-gray-50 transition ${isCoupon ? 'bg-red-50/20' : ''}">
+                        <div class="${isCoupon ? 'font-bold text-red-900' : 'text-gray-500'}">${disc.type}</div>
+                        <div class="col-span-2 pl-3 border-l border-gray-100 ${isCoupon ? 'text-[11px] text-red-600 leading-relaxed' : 'font-semibold text-gray-800'}">
+                            ${disc.value}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        
+            // 動態生成集點獎項
+            const pointsHTML = eventSchedulesData.point_rewards.map(reward => `
+                <div class="flex p-3 hover:bg-gray-50 transition gap-4">
+                    <div class="w-12 shrink-0 font-bold text-amber-600">${reward.points}</div>
+                    <div class="flex-1 text-gray-600 space-y-0.5 border-l border-gray-100 pl-4 leading-relaxed">
+                        ${reward.items.map(item => `<p>${item.startsWith('🚗') ? item : '• ' + item}</p>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        
+            // 渲染主結構
             container.innerHTML = `
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-4 sm:p-6 space-y-6 text-left">
-                    <!-- 主標題 -->
                     <div class="bg-black text-white text-center py-2.5 font-bold rounded-lg text-sm tracking-wide shadow-sm">
-                        7-11 天天抽飲料 ~ 9/1
+                        ${eventSchedulesData.title}
                     </div>
         
-                    <!-- 抽獎超連結按鈕 -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <a href="https://wooo.tw/qFjU69V" target="_blank" class="bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 text-center py-3 rounded-xl font-bold text-xs transition block shadow-xs">
+                        <a href="${eventSchedulesData.links.line}" target="_blank" class="bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 text-center py-3 rounded-xl font-bold text-xs transition block shadow-xs">
                             🟢 LINE 抽兩次 ➔
                         </a>
-                        <a href="https://wooo.tw/PRckgXA" target="_blank" class="bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 text-center py-3 rounded-xl font-bold text-xs transition block shadow-xs">
+                        <a href="${eventSchedulesData.links.app}" target="_blank" class="bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 text-center py-3 rounded-xl font-bold text-xs transition block shadow-xs">
                             🟠 APP 抽兩次 ➔
                         </a>
                     </div>
         
-                    <!-- 動態時間看板 -->
                     <div class="border border-gray-200 rounded-xl overflow-hidden shadow-xs">
                         <div class="grid grid-cols-2 bg-gray-900 text-white text-center text-[11px] font-bold py-2">
                             <div>當期活動時間</div>
@@ -1513,93 +1556,30 @@
                         </div>
                     </div>
         
-                    <!-- 搭配活動 -->
                     <div class="border border-gray-200 rounded-xl overflow-hidden shadow-xs">
                         <div class="bg-gray-900 text-white text-center text-[11px] font-bold py-2">搭配活動</div>
-                        <div class="divide-y divide-gray-200 text-xs bg-white">
-                            <div class="p-3 sm:flex justify-between items-start gap-4 hover:bg-gray-50/80 transition">
-                                <span class="font-bold text-gray-800 shrink-0 block sm:w-28 mb-1 sm:mb-0">飲料集點GO</span>
-                                <span class="text-blue-600 font-semibold shrink-0 block sm:w-36 mb-1 sm:mb-0">集點 ~9/1 ； 兌換 ~9/3</span>
-                                <span class="text-gray-600 flex-1">4件1點，請以 <strong class="text-red-500 font-bold">4的倍數</strong> 結帳 <span class="text-gray-400 font-normal">(記得報會員)</span></span>
-                            </div>
-                            <div class="p-3 sm:flex justify-between items-start gap-4 hover:bg-gray-50/80 transition">
-                                <span class="font-bold text-gray-800 shrink-0 block sm:w-28 mb-1 sm:mb-0">uniopenPRIMA會員</span>
-                                <span class="text-gray-400 italic shrink-0 block sm:w-36 mb-1 sm:mb-0">長期活動</span>
-                                <span class="text-gray-600 flex-1">思樂冰、飲料、冷藏飲 <strong class="text-green-600 font-bold">全品項 5% OP</strong> 回饋</span>
-                            </div>
-                        </div>
+                        <div class="divide-y divide-gray-200 text-xs bg-white">${partnerHTML}</div>
                     </div>
         
-                    <!-- 警語提示區 -->
+                    <!-- 🌟 升級：完全由 JSON 動態控制的提示與警語區塊 -->
                     <div class="bg-amber-50/60 border border-amber-100 rounded-xl p-3.5 text-xs text-gray-600 space-y-1 leading-relaxed">
-                        <p>💡 確認金額、品項、抽抽樂折扣沒問題，再出示各種支付方式給店員刷。</p>
-                        <p>🚨 如果發現有誤再麻煩好心人送出勘誤資訊，管理員會盡快處理。</p>
-                        <p class="text-red-500 font-bold">⚠️ 本資料表為多人心血，請勿用於營利。</p>
+                        ${noticesHTML}
                     </div>
         
-                    <!-- 活動獎項 -->
                     <div class="border border-gray-200 rounded-xl overflow-hidden shadow-xs">
                         <div class="grid grid-cols-3 bg-gray-900 text-white text-[11px] font-bold py-2 px-3">
                             <div class="col-span-1">商品</div>
                             <div class="col-span-2 border-l border-gray-700 pl-3">折扣 (價低者折)</div>
                         </div>
-                        <div class="divide-y divide-gray-200 text-xs bg-white">
-                            <div class="grid grid-cols-3 p-2.5 px-3 hover:bg-gray-50 transition"><div class="text-gray-500">指定飲料</div><div class="col-span-2 font-bold text-green-600 pl-3 border-l border-gray-100">任選 2 件 0 元 🎉</div></div>
-                            <div class="grid grid-cols-3 p-2.5 px-3 hover:bg-gray-50 transition"><div class="text-gray-500">指定飲料</div><div class="col-span-2 font-semibold text-gray-800 pl-3 border-l border-gray-100">任選 2 件 49 折</div></div>
-                            <div class="grid grid-cols-3 p-2.5 px-3 hover:bg-gray-50 transition"><div class="text-gray-500">指定飲料</div><div class="col-span-2 font-semibold text-gray-800 pl-3 border-l border-gray-100">任選 2 件 59 折</div></div>
-                            <div class="grid grid-cols-3 p-2.5 px-3 hover:bg-gray-50 transition"><div class="text-gray-500">指定飲料</div><div class="col-span-2 font-semibold text-gray-800 pl-3 border-l border-gray-100">任選 2 件 69 折</div></div>
-                            <div class="grid grid-cols-3 p-2.5 px-3 hover:bg-gray-50 transition"><div class="text-gray-500">指定飲料</div><div class="col-span-2 text-gray-600 pl-3 border-l border-gray-100">任選 2 件 79 折</div></div>
-                            <div class="grid grid-cols-3 p-2.5 px-3 hover:bg-gray-50 transition"><div class="text-gray-500">指定飲料</div><div class="col-span-2 text-gray-600 pl-3 border-l border-gray-100">任選 2 件 89 折</div></div>
-                            <div class="grid grid-cols-3 p-3 bg-red-50/20 hover:bg-red-50/40 transition">
-                                <div class="font-bold text-red-900">飲料 20 元折價券</div>
-                                <div class="col-span-2 text-[11px] text-red-600 font-medium pl-3 border-l border-gray-100 leading-relaxed">
-                                    當筆交易上限使用 1 張，可搭配任一支付或飲料折扣券，實際金額滿 100 元可用 1 張。
-                                </div>
-                            </div>
-                        </div>
+                        <div class="divide-y divide-gray-200 text-xs bg-white">${discountsHTML}</div>
                     </div>
         
-                    <!-- 集點獎項 -->
                     <div class="border border-gray-200 rounded-xl overflow-hidden shadow-xs">
                         <div class="bg-gray-900 text-white text-center text-[11px] font-bold py-2">集點獎項 (集點 ~9/1 ； 兌換 ~9/3)</div>
-                        <div class="divide-y divide-gray-200 text-xs bg-white">
-                            <div class="flex p-3 hover:bg-gray-50 transition gap-4">
-                                <div class="w-12 shrink-0 font-bold text-amber-600 flex items-center">3 點</div>
-                                <div class="flex-1 text-gray-800 font-semibold border-l border-gray-100 pl-4 flex items-center">🚗 抽 SUZUKI 汽車</div>
-                            </div>
-                            <div class="md:flex divide-y md:divide-y-0 md:divide-x divide-gray-200 bg-white">
-                                <div class="flex-1 divide-y divide-gray-150">
-                                    <div class="flex p-3 hover:bg-gray-50 transition gap-4">
-                                        <div class="w-12 shrink-0 font-bold text-amber-600">6 點</div>
-                                        <div class="flex-1 text-gray-600 space-y-0.5 border-l border-gray-100 pl-4 leading-relaxed">
-                                            <p>• 爽健美茶 535ml</p>
-                                            <p>• 御茶園 和綠茶抹茶入 550ml</p>
-                                            <p>• 十六茶零咖啡因複方茶 530ml</p>
-                                            <p>• 黑松茶花焙香麥茶 580ml</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex p-3 hover:bg-gray-50 transition gap-4">
-                                        <div class="w-12 shrink-0 font-bold text-amber-600">12 點</div>
-                                        <div class="flex-1 text-gray-600 space-y-0.5 border-l border-gray-100 pl-4 leading-relaxed">
-                                            <p>• 葡萄王康普茶經典茶香 450ml</p>
-                                            <p>• 茉莉茶園 - 蜜蘋果熟成紅 500ml</p>
-                                            <p>• 愛之味分解茶糖切四季春 590ml</p>
-                                            <p>• 黑松沙士清新紅柚風味 600ml</p>
-                                            <p>• 可口可樂草莓口味 600ml</p>
-                                            <p>• 百事可樂生可樂 500ml</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex p-3 hover:bg-gray-50 transition gap-4">
-                                        <div class="w-12 shrink-0 font-bold text-amber-600">20 點</div>
-                                        <div class="flex-1 text-gray-600 space-y-0.5 border-l border-gray-100 pl-4 leading-relaxed">
-                                            <p>• 紅牛野莓風味無糖能量飲料 250ml</p>
-                                            <p>• 魔爪澳式檸檬能量飲料 355ml</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="p-4 bg-gray-50 md:w-28 shrink-0 flex items-center justify-center text-center font-bold text-red-500 border-t md:border-t-0 text-[11px]">
-                                    🔒 一帳限定 25 組
-                                </div>
+                        <div class="md:flex divide-y md:divide-y-0 md:divide-x divide-gray-200 bg-white">
+                            <div class="flex-1 divide-y divide-gray-150">${pointsHTML}</div>
+                            <div class="p-4 bg-gray-50 md:w-28 shrink-0 flex items-center justify-center text-center font-bold text-red-500 border-t md:border-t-0 text-[11px]">
+                                🔒 一帳限定 25 組
                             </div>
                         </div>
                     </div>
