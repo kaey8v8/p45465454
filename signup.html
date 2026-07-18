@@ -44,31 +44,32 @@
     const YOUR_SUPABASE_URL = "https://ojwryrmifoimjkkumdst.supabase.co/"; 
     const YOUR_SUPABASE_ANON_KEY = "sb_publishable_aBjX88rDqNLETYznUHmFmw_3FcO0xbl";
     
-    // 這裡定義為 supabaseClient
+    // 這裡定義了 supabaseClient
     const supabaseClient = supabase.createClient(YOUR_SUPABASE_URL, YOUR_SUPABASE_ANON_KEY);
 
     async function handleSignUp() {
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
 
-            if (password.length < 6) {
-                alert("密碼長度不足，請至少輸入 6 個字元。");
-                return;
-            }
-
-            // 請確保 supabaseClient 已在 config 中正確定義並掛載
-            const { data, error } = await window.supabase.auth.signUp({
-                email: email,
-                password: password,
-            });
-
-            if (error) {
-                alert("註冊失敗：" + error.message);
-            } else {
-                alert("註冊成功！請1小時內至信箱點擊驗證信後就可以使用此帳號進行登入。主旨:Confirm your email address 寄件人:noreply@mail.app.supabase.io");
-                window.location.href = "admin.html";
-            }
+        if (password.length < 6) {
+            alert("密碼長度不足，請至少輸入 6 個字元。");
+            return;
         }
-    </script>
+
+        // --- 修改這裡：從 window.supabase 改為 supabaseClient ---
+        const { data, error } = await supabaseClient.auth.signUp({
+            email: email,
+            password: password,
+        });
+        // ----------------------------------------------------
+
+        if (error) {
+            alert("註冊失敗：" + error.message);
+        } else {
+            alert("註冊成功！請至信箱點擊驗證連結後即可登入。");
+            window.location.href = "admin.html";
+        }
+    }
+</script>
 </body>
 </html>
