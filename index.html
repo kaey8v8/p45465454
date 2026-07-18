@@ -412,13 +412,38 @@
 
                 // 獲取狀態為 pending 的飲料、活動與勘誤回報
                 await fetchPendingData();
-
+                
+                // 抽出來寫的讚數載入與合併函數
+                await loadAndMergeLikes();
+                
                 filterAndRender();
             } catch (e) {
                 console.error(e);
             }
         }
+        // 🌟 獨立處理：分開讀取不太重要的讚數資料，並合併回核心數據
+        async function loadAndMergeLikes() {
+            try {
+                // 單獨讀取讚數資料表
+                const { data: rawLikes, error } = await supabaseClient
+                    .from('drink_likes_counter')
+                    .select('*');
+                
+                if (error) throw error;
+                if (!rawLikes || rawLikes.length === 0) return;
 
+                // 將讀取到的讚數，配對合併進核心的 allDrinks 陣列中
+                allDrinks = allDrinks.map(drink => {
+                    const matchLike = rawLikes.find(l => l.id === drink.id);
+                    return {
+                        ...drink,
+                        likes: matchLike ? matchLike.likes : 0 // 沒被按過讚的預設就是 0
+                    };
+                });
+            } catch (err) {
+                console.error("載入讚數獨立表失敗，改以預設 0 讚顯示:", err);
+            }
+        }
         // 拉取所有狀態為 pending 的資料並進行格式統一
         async function fetchPendingData() {
             try {
@@ -1573,12 +1598,14 @@
                         </a>
                     </div>
         
+                    <!-- 🌟 調整後的當期活動時間與兌換時間區塊 -->
                     <div class="border border-gray-200 rounded-xl overflow-hidden shadow-xs">
                         <div class="grid grid-cols-2 bg-gray-900 text-white text-center text-[11px] font-bold py-2">
                             <div>當期活動時間</div>
                             <div class="border-l border-gray-700">兌換時間</div>
                         </div>
-                        <div class="grid grid-cols-2 text-center text-sm font-extrabold py-3 bg-gray-50 text-amber-600 font-mono">
+                        <!-- 調整這裡：text-sm 改為 text-lg (加大)，font-extrabold 改為 font-black (極粗) -->
+                        <div class="grid grid-cols-2 text-center text-lg font-black py-3 bg-gray-50 text-amber-600 font-mono tracking-wide">
                             <div>~${period.activeStr}</div>
                             <div class="border-l border-gray-200">~${period.redeemStr}</div>
                         </div>
@@ -1617,6 +1644,7 @@
         // ==========================================
         // 🌟 愛心計數器與商品列表渲染
         // ==========================================
+        // 處理按讚按鈕點擊 (串接獨立的 drink_likes_counter 表)
         async function toggleLikeDrink(id) {
             const storageKey = `liked_drink_${id}`;
             if (localStorage.getItem(storageKey)) {
@@ -1627,21 +1655,39 @@
             const drink = allDrinks.find(d => d.id === id);
             if (!drink) return;
         
+            // 1. 前端即時數值累加 (Optimistic UI)
             drink.likes = (drink.likes || 0) + 1;
             filterAndRender();
         
+            // 2. 寫入 LocalStorage 防止重複點選
             localStorage.setItem(storageKey, 'true');
         
-            const { error } = await supabaseClient
-                .from('drink_submissions')
-                .update({ likes: drink.likes })
-                .eq('id', id);
-        
-            if (error) {
-                console.error("更新讚數失敗:", error);
+            try {
+                // 3. 嘗試直接更新讚數表
+                const { data, error: updateError } = await supabaseClient
+                    .from('drink_likes_counter')
+                    .update({ likes: drink.likes })
+                    .eq('id', id)
+                    .select();
+                
+                if (updateError) throw updateError;
+                
+                // 4. 如果更新後發現沒這筆資料 (代表是第一次有人對這品項按讚)，則進行全新插入
+                if (!data || data.length === 0) {
+                    const { error: insertError } = await supabaseClient
+                        .from('drink_likes_counter')
+                        .insert([{ id: id, likes: drink.likes }]);
+                    
+                    if (insertError) throw insertError;
+                }
+                
+            } catch (err) {
+                console.error("更新讚數失敗:", err);
+                // 若資料庫寫入失敗，則回滾前端數值
                 drink.likes -= 1;
                 localStorage.removeItem(storageKey);
                 filterAndRender();
+                alert("讚數同步失敗，請稍後再試！");
             }
         }
         
