@@ -370,6 +370,24 @@
                 showMainWorkspace();
             } catch (e) { alert(`登入失敗：${e.message || '帳密錯誤'}`); }
         }
+        async function handleForgotPassword() {
+            const email = document.getElementById('adminUsername').value.trim();
+            
+            if (!email) {
+                alert("請先在 Email 欄位輸入您的電子信箱");
+                return;
+            }
+
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + '/admin.html',
+            });
+
+            if (error) {
+                alert("發送失敗：" + error.message);
+            } else {
+                alert("重設密碼連結已寄至您的信箱，請查收。");
+            }
+        }
         // 頁面載入時檢查是否為「重設密碼」流程
         window.addEventListener('DOMContentLoaded', () => {
             // Supabase 重設密碼後會自動在 URL 加入 #access_token
