@@ -1414,7 +1414,7 @@
         async function loadEventSchedules() {
             try {
                 // ⚠️ 請記得將下方網址替換成你實際在 GitHub 上的 Raw 原始網址
-                const gitHubRawUrl = "https://raw.githubusercontent.com/你的帳號/你的專案/main/event_schedules.json";
+                const gitHubRawUrl = "https://raw.githubusercontent.com/kaey8v8/p45465454/refs/heads/main/event_schedules.json";
                 const response = await fetch(gitHubRawUrl);
                 eventSchedulesData = await response.json();
                 console.log("🎯 成功從 GitHub 載入完整活動資訊表");
