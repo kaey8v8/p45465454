@@ -923,21 +923,30 @@
             };
         
             try {
-                    // 1. 插入到正式表
-                    await supabaseClient.from(targetTable).insert([newEntry]);
-                    
-                    // 2. 將報告狀態改為 'approved' (或者直接刪除該行)
-                    // 注意：這裡改用 .delete() 比較乾淨，直接從佇列移除
-                    await supabaseClient.from('issue_reports').delete().eq('id', reportId);
-                    const { error } = await supabaseClient
-                            .from('issue_reports')
-                            .delete()
-                            .eq('id', reportId);
-                    
-                    if (error) throw error; // 確保有拋出錯誤讓你知道發生什麼事
-                    alert("核可成功！");
-                    refreshAllData(); // 重新整理後，佇列就會消失
-                } catch (e) { alert("入庫失敗：" + e.message); }
+                // 1. 插入到正式表
+                const { error: insertError } = await supabaseClient
+                    .from(targetTable)
+                    .insert([newEntry]);
+                
+                if (insertError) throw insertError; // 檢查插入是否成功
+            
+                // 2. 將報告狀態改為 'approved'，而不是刪除它
+                // 這樣資料就會保留在 issue_reports 表中，但狀態變成 approved
+                const { error: updateError } = await supabaseClient
+                    .from('issue_reports')
+                    .update({ 
+                        status: 'approved',
+                        admin_name: adminName // 順便記錄是誰核可的
+                    })
+                    .eq('id', reportId);
+                
+                if (updateError) throw updateError; // 檢查更新是否成功
+                
+                alert("核可成功！紀錄已保留。");
+                refreshAllData(); // 重新整理後，因為 fetchPendingData 通常只抓 status='pending'，所以這些已核可的會自動從待審清單消失
+            } catch (e) { 
+                console.error(e);
+                alert("入庫失敗：" + e.message); 
             }
         // ==================== 彈窗編輯處理 ====================
         function parseFlexibleDate(dateStr) {
