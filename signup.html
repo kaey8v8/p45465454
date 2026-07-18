@@ -3,18 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理員審核後台</title>
+    <title>管理員帳號註冊</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+<body class="bg-gray-100 min-h-screen text-gray-800 antialiased">
 
+    <!-- 頂部導覽列 -->
+    <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-xs">
+        <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <span class="tracking-wide">管理員帳號註冊</span>
+        </h1>
+    </header>
 
-<!-- 註冊表單結構 -->
-<input type="email" id="signupEmail" placeholder="Email" class="...">
-<input type="password" id="signupPassword" placeholder="密碼" class="...">
-<button onclick="handleSignUp()" class="...">註冊</button>
+    <!-- 註冊區塊 -->
+    <section class="max-w-md mx-auto mt-20 p-6 bg-white rounded-2xl border border-gray-200 shadow-xl">
+        <h3 class="text-lg font-bold text-gray-800 mb-6 text-center flex items-center justify-center gap-1.5">
+            <svg class="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <line x1="19" y1="8" x2="19" y2="14"></line>
+                <line x1="22" y1="11" x2="16" y2="11"></line>
+            </svg>
+            建立新帳號
+        </h3>
+        <div class="space-y-4">
+            <input type="email" id="signupEmail" placeholder="Email" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-hidden focus:border-blue-500">
+            <input type="password" id="signupPassword" placeholder="密碼 (至少6碼)" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-hidden focus:border-blue-500">
+            <button onclick="handleSignUp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-lg text-sm transition shadow-sm">註冊帳號</button>
+        </div>
+        <div class="mt-4 text-center text-xs text-gray-500">
+            已有帳號？<a href="admin.html" class="text-blue-600 hover:underline">返回登入</a>
+        </div>
+    </section>
 
 <script>
     // Supabase 設定
@@ -25,21 +48,27 @@
     const supabaseClient = supabase.createClient(YOUR_SUPABASE_URL, YOUR_SUPABASE_ANON_KEY);
 
     async function handleSignUp() {
-        // 使用 supabaseClient 而不是 window.supabase
-        console.log(supabaseClient); 
-        const email = document.getElementById('signupEmail').value;
-        const password = document.getElementById('signupPassword').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
 
-        // 這裡改用 supabaseClient.auth.signUp
-        const { data, error } = await supabaseClient.auth.signUp({
-            email: email,
-            password: password,
-        });
+            if (password.length < 6) {
+                alert("密碼長度不足，請至少輸入 6 個字元。");
+                return;
+            }
 
-        if (error) {
-            alert("註冊失敗：" + error.message);
-        } else {
-            alert("註冊成功！");
+            // 請確保 supabaseClient 已在 config 中正確定義並掛載
+            const { data, error } = await window.supabase.auth.signUp({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                alert("註冊失敗：" + error.message);
+            } else {
+                alert("註冊成功！請至信箱點擊驗證信後就可以使用此帳號進行登入。主旨:Confirm your email address 寄件人:noreply@mail.app.supabase.io");
+                window.location.href = "admin.html";
+            }
         }
-    }
-</script>
+    </script>
+</body>
+</html>
