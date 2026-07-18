@@ -17,6 +17,11 @@
 <button onclick="handleSignUp()" class="...">註冊</button>
 
 <script>
+    // Supabase 設定
+    const YOUR_SUPABASE_URL = "https://ojwryrmifoimjkkumdst.supabase.co/"; 
+    const YOUR_SUPABASE_ANON_KEY = "sb_publishable_aBjX88rDqNLETYznUHmFmw_3FcO0xbl";
+    const supabaseClient = supabase.createClient(YOUR_SUPABASE_URL, YOUR_SUPABASE_ANON_KEY);
+
     async function handleSignUp() {
         console.log(window.supabase);
         const email = document.getElementById('signupEmail').value;
