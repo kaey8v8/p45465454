@@ -1,5 +1,10 @@
-[
-    { "end": "2026-07-16T19:00:00", "activeStr": "7/19(19:00)", "redeemStr": "7/19(23:59)" },
+{
+  "title": "7-11 天天抽飲料 ~ 9/1",
+  "links": {
+    "line": "https://wooo.tw/qFjU69V",
+    "app": "https://wooo.tw/PRckgXA"
+  },
+  "timelines": [
     { "end": "2026-07-16T19:00:00", "activeStr": "7/16(19:00)", "redeemStr": "7/16(23:59)" },
     { "end": "2026-07-19T19:00:00", "activeStr": "7/19(19:00)", "redeemStr": "7/19(23:59)" },
     { "end": "2026-07-23T19:00:00", "activeStr": "7/23(19:00)", "redeemStr": "7/23(23:59)" },
@@ -15,4 +20,29 @@
     { "end": "2026-08-27T19:00:00", "activeStr": "8/27(19:00)", "redeemStr": "8/27(23:59)" },
     { "end": "2026-08-30T19:00:00", "activeStr": "8/30(19:00)", "redeemStr": "8/30(23:59)" },
     { "end": "2026-09-01T19:00:00", "activeStr": "9/1(19:00)", "redeemStr": "9/1(23:59)" }
-]
+  ],
+  "partner_activities": [
+    { "name": "飲料集點GO", "duration": "集點 ~9/1 ； 兌換 ~9/3", "desc": "4件1點，請以 <strong class='text-red-500 font-bold'>4的倍數</strong> 結帳 (記得報會員)" },
+    { "name": "uniopenPRIMA會員", "duration": "長期活動", "desc": "思樂冰、飲料、冷藏飲 <strong class='text-green-600 font-bold'>全品項 5% OP</strong>" }
+  ],
+  "notices": [
+    { "icon": "💡", "text": "確認金額、品項、抽抽樂折扣沒問題，再出示各種支付方式給店員刷。", "isRed": false },
+    { "icon": "🚨", "text": "如果發現有誤再麻煩好心人送出勘誤資訊，管理員會盡快處理。", "isRed": false },
+    { "icon": "⚠️", "text": "本資料表為多人心血，請勿用於營利。", "isRed": true }
+  ],
+  "discounts": [
+    { "type": "指定飲料", "value": "任選 2 件 0 元 🎉" },
+    { "type": "指定飲料", "value": "任選 2 件 49 折" },
+    { "type": "指定飲料", "value": "任選 2 件 59 折" },
+    { "type": "指定飲料", "value": "任選 2 件 69 折" },
+    { "type": "指定飲料", "value": "任選 2 件 79 折" },
+    { "type": "指定飲料", "value": "任選 2 件 89 折" },
+    { "type": "飲料20元折價券", "value": "當筆交易上限使用 1 張，可搭配任一支付或飲料折扣券，實際金額滿 100 元可用 1 張。" }
+  ],
+  "point_rewards": [
+    { "points": "3 點", "items": ["🚗 抽 SUZUKI 汽車"] },
+    { "points": "6 點", "items": ["爽健美茶 535ml", "御茶園 和綠茶抹茶入 550ml", "十六茶零咖啡因複方茶 530ml", "黑松茶花焙香麥茶 580ml"] },
+    { "points": "12 點", "items": ["葡萄王康普茶經典茶香 450ml", "茉莉茶園 - 蜜蘋果熟成紅 500ml", "愛之味分解茶糖切四季春 590ml", "黑松沙士清新紅柚風味 600ml", "可口可樂草莓口味 600ml", "百事可樂生可樂 500ml"] },
+    { "points": "20 點", "items": ["紅牛野莓風味無糖能量飲料 250ml", "魔爪澳式檸檬能量飲料 355ml"] }
+  ]
+}
