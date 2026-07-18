@@ -1657,9 +1657,10 @@
                             <span class="arrow transition-transform duration-200 text-xs text-gray-400">▼</span>
                         </button>
                         
-                        <!-- 內容區：預設隱藏 hidden，電腦版採 6 欄布局，手機版自動單欄垂直排 -->
+                        <!-- 內容區：預設隱藏 hidden 手機版自動單欄垂直排 -->
                         <div id="excludedContent" class="hidden p-4 bg-white border-t border-gray-100">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                            <!-- 🌟 在平板與電腦版都固定為最多3欄 -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                                 ${excludedHTML}
                             </div>
                             <div class="mt-3 text-[10px] text-red-500 text-right">
