@@ -1,0 +1,23 @@
+<!-- 註冊表單結構 -->
+<input type="email" id="signupEmail" placeholder="Email" class="...">
+<input type="password" id="signupPassword" placeholder="密碼" class="...">
+<button onclick="handleSignUp()" class="...">註冊</button>
+
+<script>
+    async function handleSignUp() {
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+
+        // 使用 Supabase 進行註冊
+        const { data, error } = await window.supabase.auth.signUp({
+            email: email,
+            password: password,
+        });
+
+        if (error) {
+            alert("註冊失敗：" + error.message);
+        } else {
+            alert("註冊成功！請檢查您的 Email 以驗證帳號。");
+        }
+    }
+</script>
